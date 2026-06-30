@@ -36,6 +36,23 @@ sqlite.exec(`
     "status" text DEFAULT 'pending' NOT NULL,
     FOREIGN KEY ("service_id") REFERENCES "services"("id") ON UPDATE no action ON DELETE no action
   );
+
+  -- Seed Initial Data if database is empty
+  INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible)
+  SELECT 1, 'Facials', 'Signature Sculpting Facial', 150, 60, 1
+  WHERE NOT EXISTS (SELECT 1 FROM "services" WHERE id = 1);
+
+  INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible)
+  SELECT 2, 'Facials', 'Luxury Lymphatic Drainage', 200, 90, 1
+  WHERE NOT EXISTS (SELECT 1 FROM "services" WHERE id = 2);
+
+  INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible)
+  SELECT 3, 'Brows & Lashes', 'Lash Lift & Tint', 85, 45, 0
+  WHERE NOT EXISTS (SELECT 1 FROM "services" WHERE id = 3);
+
+  INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible)
+  SELECT 4, 'Brows & Lashes', 'Brow Lamination', 100, 60, 0
+  WHERE NOT EXISTS (SELECT 1 FROM "services" WHERE id = 4);
 `);
 
 // API ROUTES
