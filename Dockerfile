@@ -9,6 +9,7 @@ RUN npm run build
 # ---- Build Server ----
 FROM node:18-alpine AS server-builder
 WORKDIR /app/server
+RUN apk add --no-cache python3 make g++
 COPY server/package*.json ./
 RUN npm install
 COPY server/ ./
@@ -23,6 +24,7 @@ COPY --from=server-builder /app/server/src/db/sqlite.db ./server/dist/db/sqlite.
 COPY --from=client-builder /app/client/dist ./client/dist
 
 WORKDIR /app/server
+RUN apk add --no-cache python3 make g++
 RUN npm install --production
 
 EXPOSE 3000
