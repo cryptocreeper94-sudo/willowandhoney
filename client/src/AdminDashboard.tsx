@@ -23,9 +23,9 @@ export function AdminDashboard() {
   const fetchData = async () => {
     try {
       const [analyticsRes, bookingsRes, servicesRes] = await Promise.all([
-        fetch('http://localhost:3000/api/admin/analytics', { headers: { 'X-Admin-Pin': pin } }),
-        fetch('http://localhost:3000/api/admin/bookings', { headers: { 'X-Admin-Pin': pin } }),
-        fetch('http://localhost:3000/api/services')
+        fetch('/api/admin/analytics', { headers: { 'X-Admin-Pin': pin } }),
+        fetch('/api/admin/bookings', { headers: { 'X-Admin-Pin': pin } }),
+        fetch('/api/services')
       ]);
 
       if (!analyticsRes.ok) throw new Error('Invalid PIN');
@@ -50,7 +50,7 @@ export function AdminDashboard() {
   const handleAddService = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await fetch('http://localhost:3000/api/admin/services', {
+      await fetch('/api/admin/services', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Pin': pin },
         body: JSON.stringify({ ...newService, price: Number(newService.price) })
@@ -65,7 +65,7 @@ export function AdminDashboard() {
   const handleDeleteService = async (id: number) => {
     if (!confirm('Are you sure you want to delete this service?')) return;
     try {
-      await fetch(`http://localhost:3000/api/admin/services/${id}`, {
+      await fetch(`/api/admin/services/${id}`, {
         method: 'DELETE',
         headers: { 'X-Admin-Pin': pin }
       });

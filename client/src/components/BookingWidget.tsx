@@ -27,7 +27,7 @@ export function BookingWidget() {
     setIsSubmitting(true);
     try {
       // Simulation of hitting our API
-      // await fetch('http://localhost:3000/api/bookings', { method: 'POST', ... })
+      // await fetch('/api/bookings', { method: 'POST', ... })
       await new Promise(resolve => setTimeout(resolve, 1500));
       setIsSuccess(true);
     } catch (e) {

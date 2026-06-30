@@ -27,7 +27,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetch('http://localhost:3000/api/services')
+    fetch('/api/services')
       .then(res => res.json())
       .then(data => setServices(data))
       .catch(err => console.error("Could not load services", err));
