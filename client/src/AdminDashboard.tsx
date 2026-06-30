@@ -95,6 +95,13 @@ export function AdminDashboard() {
     img.src = `data:image/svg+xml;base64,${btoa(svgData)}`;
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-wh-dark flex items-center justify-center p-4 font-outfit">
@@ -104,8 +111,8 @@ export function AdminDashboard() {
             <div className="w-20 h-20 bg-black rounded-2xl flex items-center justify-center border border-white/5 shadow-inner">
               <Lock className="w-10 h-10 text-wh-pink" />
             </div>
-            <h2 className="text-3xl font-playfair text-white italic">Command Center</h2>
-            <p className="text-white/50 text-sm tracking-wide">Enter your secure PIN to access the Trust Layer backend.</p>
+            <h2 className="text-3xl font-playfair text-white italic">Willow & Honey Admin</h2>
+            <p className="text-white/50 text-sm tracking-wide">Enter your secure PIN to access the backend.</p>
           </div>
 
           <div className="flex flex-col gap-2 z-10">
@@ -140,10 +147,9 @@ export function AdminDashboard() {
         <header className="flex flex-col gap-6 pb-6 border-b border-white/10 sticky top-0 bg-wh-dark/90 backdrop-blur-xl z-50 pt-4 -mt-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h1 className="text-4xl font-playfair italic mb-2">Command Center</h1>
+              <h1 className="text-4xl font-playfair italic mb-2">{getGreeting()}, Ariel!</h1>
               <div className="flex items-center gap-2 text-white/50 text-xs font-inter tracking-[0.2em] uppercase">
-                <ShieldCheck className="w-4 h-4 text-wh-pink" />
-                Powered by DarkWave Trust Layer
+                Welcome to your dashboard &bull; Powered by DarkWave Studios
               </div>
             </div>
             <button 
@@ -208,7 +214,7 @@ export function AdminDashboard() {
               <div className="bg-wh-card p-8 rounded-3xl border border-wh-pink flex flex-col gap-4 relative overflow-hidden shadow-[0_0_30px_rgba(255,42,117,0.15)]">
                 <div className="flex justify-between items-start z-10">
                   <div>
-                    <p className="text-wh-pink/80 text-xs font-inter tracking-[0.2em] uppercase mb-2 font-bold">Orbit Staffing (20%)</p>
+                    <p className="text-wh-pink/80 text-xs font-inter tracking-[0.2em] uppercase mb-2 font-bold">Platform Fee (20%)</p>
                     <h3 className="text-5xl font-bold text-wh-pink">${(analytics?.trustLayerFee || 0).toLocaleString()}</h3>
                   </div>
                   <div className="p-4 bg-wh-pink/10 rounded-2xl text-wh-pink">
@@ -438,9 +444,9 @@ export function AdminDashboard() {
                     <div className="w-24 h-24 rounded-full bg-gradient-to-br from-wh-pink to-purple-600 flex items-center justify-center shadow-[0_0_50px_rgba(255,42,117,0.3)]">
                       <Lock className="w-10 h-10 text-white" />
                     </div>
-                    <h2 className="text-4xl font-playfair italic">The Trust Layer Economy</h2>
+                    <h2 className="text-4xl font-playfair italic">The Membership Economy</h2>
                     <p className="text-white/60 font-outfit text-lg font-light leading-relaxed">
-                      Prepare for Recurring Revenue. The DarkWave Trust Layer will soon integrate directly with Stripe to allow you to capture payments instantly upon booking.
+                      Prepare for Recurring Revenue. Integrate directly with Stripe to capture payments instantly upon booking and manage memberships.
                     </p>
                   </motion.div>
                 )}
@@ -458,7 +464,7 @@ export function AdminDashboard() {
                     </div>
                     <h2 className="text-4xl font-playfair italic">VIP Memberships</h2>
                     <p className="text-white/60 font-outfit text-lg font-light leading-relaxed">
-                      Why charge once when you can charge monthly? Soon, you will be able to offer exclusive VIP Memberships (e.g., $150/mo for 1 Facial + 1 Brow Wax). Guaranteed monthly income, automated billing.
+                      Why charge once when you can charge monthly? Offer exclusive VIP Memberships (e.g., $150/mo for 1 Facial + 1 Brow Wax). Guaranteed monthly income, automated billing.
                     </p>
                   </motion.div>
                 )}
@@ -476,17 +482,17 @@ export function AdminDashboard() {
                     </div>
                     <h2 className="text-4xl font-playfair italic">Seamless Integration</h2>
                     <p className="text-white/60 font-outfit text-lg font-light leading-relaxed">
-                      When this feature unlocks, you will be prompted to connect your bank account via Stripe. The Trust Layer handles the secure tokenization, you keep the profits.
+                      Connect your bank account via Stripe. We handle the secure tokenization, you keep the profits.
                     </p>
-                    <div className="px-6 py-3 bg-white/5 rounded-full border border-white/10 text-sm text-wh-pink uppercase tracking-widest mt-4">
-                      Deploying Soon
-                    </div>
+                    <button className="px-8 py-4 bg-wh-pink rounded-full text-sm text-white font-bold tracking-widest mt-6 hover:bg-white hover:text-wh-pink transition-all shadow-lg">
+                      CONNECT STRIPE ACCOUNT
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>
 
               {/* Navigation Controls */}
-              <div className="absolute bottom-8 left-0 right-0 flex justify-center items-center gap-6">
+              <div className="mt-12 flex justify-center items-center gap-6">
                 <button 
                   onClick={() => setSlideIndex(prev => Math.max(0, prev - 1))}
                   disabled={slideIndex === 0}

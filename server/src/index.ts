@@ -51,6 +51,9 @@ try {
 } catch (e) { /* Ignore if already exists */ }
 
 sqlite.exec(`
+  -- Wipe old seed data that lacked images to allow the new seed to populate
+  DELETE FROM "services" WHERE image_url IS NULL;
+
   -- Seed Initial Data if database is empty
   INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible, image_url, description)
   SELECT 1, 'Body Treatment', 'Back Treatment', 50, 90, 1, '/services/body_treatment.png', 'Relaxing back treatment and cleansing.'
