@@ -20,7 +20,9 @@ sqlite.exec(`
     "name" text NOT NULL,
     "price" integer NOT NULL,
     "duration_minutes" integer NOT NULL,
-    "is_mobile_eligible" integer DEFAULT 0 NOT NULL
+    "is_mobile_eligible" integer DEFAULT 0 NOT NULL,
+    "image_url" text,
+    "description" text
   );
   CREATE TABLE IF NOT EXISTS "bookings" (
     "id" text PRIMARY KEY NOT NULL,
@@ -37,6 +39,18 @@ sqlite.exec(`
     FOREIGN KEY ("service_id") REFERENCES "services"("id") ON UPDATE no action ON DELETE no action
   );
 
+  -- Migrate existing services table if needed
+`);
+
+try {
+  sqlite.exec(`ALTER TABLE "services" ADD COLUMN "image_url" text;`);
+} catch (e) { /* Ignore if already exists */ }
+
+try {
+  sqlite.exec(`ALTER TABLE "services" ADD COLUMN "description" text;`);
+} catch (e) { /* Ignore if already exists */ }
+
+sqlite.exec(`
   -- Seed Initial Data if database is empty
   INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible, image_url, description)
   SELECT 1, 'Body Treatment', 'Back Treatment', 50, 90, 1, '/services/body_treatment.png', 'Relaxing back treatment and cleansing.'
