@@ -1,0 +1,10 @@
+import { drizzle } from 'drizzle-orm/better-sqlite3';
+import Database from 'better-sqlite3';
+import * as schema from './schema';
+import path from 'path';
+
+// Create a local SQLite database file
+const sqlite = new Database(path.join(process.cwd(), 'willowandhoney.db'));
+
+// Initialize Drizzle with the schema
+export const db = drizzle(sqlite, { schema });

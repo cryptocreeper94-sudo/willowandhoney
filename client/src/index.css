@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@theme {
+  --color-wh-pink: #ff2a75;
+  --color-wh-dark: #0f0f13;
+  --color-wh-card: #1a1a20;
+  --color-wh-gold: #d4af37;
+  --font-outfit: 'Outfit', sans-serif;
+  --font-playfair: 'Playfair Display', serif;
+  --font-inter: 'Inter', sans-serif;
+}
+
+@layer base {
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,400;0,600;0,800;1,600&family=Inter:wght@400;500;600&display=swap');
+
+  body {
+    @apply bg-wh-dark text-white font-inter;
+    overscroll-behavior: none;
+    user-select: none;
+  }
+
+  input, textarea, [contenteditable="true"] {
+    user-select: text;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-playfair;
+  }
+}
+
+@layer utilities {
+  .bento-card {
+    @apply bg-wh-card rounded-3xl p-8 border border-white/5 relative overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(255,42,117,0.15)] hover:border-wh-pink/50;
+  }
+  
+  .glass-panel {
+    @apply bg-wh-dark/80 backdrop-blur-md border border-white/10;
+  }
+}
