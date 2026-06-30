@@ -4,7 +4,7 @@ import * as schema from './schema';
 import path from 'path';
 
 // Create a local SQLite database file
-export const sqlite = new Database(path.join(process.cwd(), 'willowandhoney.db'));
+export const sqlite: Database.Database = new Database(path.join(process.cwd(), 'willowandhoney.db'));
 
 // Initialize Drizzle with the schema
 export const db = drizzle(sqlite, { schema });
