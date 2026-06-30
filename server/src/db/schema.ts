@@ -24,3 +24,23 @@ export const bookings = sqliteTable('bookings', {
   endTime: text('end_time').notNull(), // ISO datetime string
   status: text('status').notNull().default('pending'), // pending, confirmed, cancelled
 });
+
+export const reviews = sqliteTable('reviews', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  clientName: text('client_name').notNull(),
+  rating: integer('rating').notNull().default(5),
+  comment: text('comment').notNull(),
+  createdAt: text('created_at').notNull(), // ISO datetime string
+  isVerified: integer('is_verified', { mode: 'boolean' }).notNull().default(false),
+});
+
+export const siteAnalytics = sqliteTable('site_analytics', {
+  date: text('date').primaryKey(), // YYYY-MM-DD
+  pageViews: integer('page_views').notNull().default(0),
+  uniqueVisitors: integer('unique_visitors').notNull().default(0),
+});
+
+export const adminSettings = sqliteTable('admin_settings', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+});

@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flower2, ShieldCheck, Camera, Sparkles, CalendarDays, Compass, Plus } from 'lucide-react';
+import { Flower2, ShieldCheck, Camera, Sparkles, CalendarDays, Compass, Plus, Star } from 'lucide-react';
 import { BottomSheetBooking } from './components/BottomSheetBooking';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('explore');
   const [selectedService, setSelectedService] = useState<any | null>(null);
   const [services, setServices] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -33,11 +34,37 @@ export default function App() {
     lastClickTime.current = now;
   };
 
+  const handleDevTrigger = (e: React.MouseEvent) => {
+    if (e.detail === 3) {
+      window.location.href = '/dev';
+    }
+  };
+
   useEffect(() => {
     fetch('/api/services')
       .then(res => res.json())
       .then(data => setServices(data))
       .catch(err => console.error("Could not load services", err));
+
+    fetch('/api/reviews')
+      .then(res => res.json())
+      .then(data => setReviews(data))
+      .catch(err => console.error("Could not load reviews", err));
+  }, []);
+
+  // Analytics Tracking
+  useEffect(() => {
+    let deviceId = localStorage.getItem('wh_device_id');
+    if (!deviceId) {
+      deviceId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+      localStorage.setItem('wh_device_id', deviceId);
+    }
+
+    fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deviceId })
+    }).catch(console.error);
   }, []);
 
   // Ken Burns Slideshow Timer
@@ -60,7 +87,7 @@ export default function App() {
     <div className="bg-wh-dark text-white min-h-screen pb-32 selection:bg-wh-pink selection:text-white relative overflow-x-hidden no-scrollbar">
       
       {/* PERSISTENT HERO HEADER (Always visible across all tabs) */}
-      <div className="relative w-full h-[60vh] md:h-[70vh] bg-black flex flex-col items-center justify-end overflow-hidden rounded-b-[40px] shadow-2xl z-20 pb-12">
+      <div className="relative w-full h-[60vh] md:h-[70vh] bg-black flex flex-col items-center justify-center md:justify-end overflow-hidden rounded-b-[40px] shadow-2xl z-20 pb-0 md:pb-12">
         <AnimatePresence mode="wait">
           <motion.img 
             key={currentSlide}
@@ -76,9 +103,9 @@ export default function App() {
             }}
           />
         </AnimatePresence>
-        <div className="absolute inset-0 bg-gradient-to-t from-wh-dark via-wh-dark/30 to-black/20 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
         
-        <div className="relative z-10 text-center px-6 mt-auto">
+        <div className="relative z-10 text-center px-6 mt-16 md:mt-auto">
           <motion.h1 
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -143,6 +170,37 @@ export default function App() {
                     Note: Facial and body treatments require 90-minute blocks to allow for client downtime and optimal relaxation. Waxing, tinting, and lifting require 30-minute blocks.
                   </p>
                 </div>
+
+                {/* Client Love / Testimonials */}
+                <div className="mb-20">
+                  <div className="text-center mb-12">
+                    <h3 className="text-3xl font-playfair italic mb-2">Client Love</h3>
+                    <p className="text-white/50 font-outfit uppercase tracking-[0.2em] text-xs">Real Results, Real Confidence</p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {reviews.map(review => (
+                      <div key={review.id} className="bg-white/5 border border-white/10 rounded-[30px] p-8 backdrop-blur-sm hover:border-wh-pink/30 transition-all">
+                        <div className="flex items-center justify-between mb-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-wh-pink to-purple-500 flex items-center justify-center font-playfair italic font-bold text-lg">
+                              {review.clientName.charAt(0)}
+                            </div>
+                            <div>
+                              <div className="font-outfit font-bold">{review.clientName}</div>
+                              <div className="text-xs text-white/50">{new Date(review.createdAt).toLocaleDateString()}</div>
+                            </div>
+                          </div>
+                          <div className="flex gap-1">
+                            {[...Array(review.rating)].map((_, i) => (
+                              <Star key={i} className="w-4 h-4 text-wh-gold fill-wh-gold" />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-white/80 font-outfit font-light leading-relaxed italic">"{review.comment}"</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </motion.div>
           )}
@@ -177,9 +235,9 @@ export default function App() {
                           className="text-left group relative overflow-hidden rounded-[32px] bg-black border border-white/10 hover:border-wh-pink/50 transition-all shadow-2xl h-[320px] flex flex-col justify-end"
                         >
                           {/* Photorealistic Background Image */}
-                          {service.imageUrl ? (
+                          {service.image_url ? (
                             <img 
-                              src={service.imageUrl} 
+                              src={service.image_url} 
                               alt={service.name}
                               className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-500 group-hover:scale-105"
                             />
@@ -271,18 +329,24 @@ export default function App() {
             </p>
           </div>
 
-          <div className="flex flex-col items-center md:items-end gap-2">
+          <a href="https://darkwavestudios.io" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center md:items-end gap-2 hover:opacity-80 transition-opacity">
             <div className="flex items-center gap-2 text-white/50 text-[10px] font-inter tracking-[0.2em] uppercase">
-              <ShieldCheck className="w-4 h-4 text-white/30" />
+              <ShieldCheck 
+                className="w-4 h-4 text-white/30 cursor-pointer" 
+                onClick={(e) => {
+                  e.preventDefault(); // prevent the link click
+                  handleDevTrigger(e);
+                }}
+              />
               Powered by
             </div>
             <p className="text-sm font-inter text-white/80 tracking-widest font-bold">
-              DARKWAVE TRUST LAYER
+              DARKWAVE STUDIOS LLC
             </p>
             <p className="text-[10px] font-outfit text-white/30 tracking-widest">
-              &copy; {new Date().getFullYear()} DarkWave Studio LLC
+              &copy; {new Date().getFullYear()}
             </p>
-          </div>
+          </a>
         </div>
       </footer>
 

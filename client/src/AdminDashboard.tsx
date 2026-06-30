@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ShieldCheck, Lock, Activity, Users, DollarSign, ArrowLeft, Plus, Edit3, Trash2, Download, QrCode, CreditCard, ChevronRight, ChevronLeft } from 'lucide-react';
+import { ShieldCheck, Lock, Activity, Users, DollarSign, ArrowLeft, Plus, Edit3, Trash2, Download, QrCode, CreditCard, ChevronRight, ChevronLeft, Shield, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { QRCodeSVG } from 'qrcode.react';
@@ -10,7 +10,12 @@ export function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'services' | 'marketing' | 'memberships'>('overview');
+  
+  // Settings State
+  const [newPin, setNewPin] = useState('');
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [settingsSuccess, setSettingsSuccess] = useState('');
+  const [activeTab, setActiveTab] = useState<'overview' | 'services' | 'marketing' | 'memberships' | 'security'>('overview');
   const [slideIndex, setSlideIndex] = useState(0);
 
   const [analytics, setAnalytics] = useState<any>(null);
@@ -102,6 +107,35 @@ export function AdminDashboard() {
     return 'Good evening';
   };
 
+  const handleUpdatePin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPin || newPin.length < 4) {
+      setError('PIN must be at least 4 characters');
+      return;
+    }
+    setSettingsLoading(true);
+    setSettingsSuccess('');
+    setError('');
+    
+    try {
+      const res = await fetch('/api/admin/settings/pin', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Admin-Pin': pin 
+        },
+        body: JSON.stringify({ newPin })
+      });
+      if (!res.ok) throw new Error('Failed to update PIN');
+      setSettingsSuccess('Access Code successfully updated.');
+      setPin(newPin); // Update current session PIN
+      setNewPin('');
+    } catch (err: any) {
+      setError(err.message);
+    }
+    setSettingsLoading(false);
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-wh-dark flex items-center justify-center p-4 font-outfit">
@@ -149,7 +183,7 @@ export function AdminDashboard() {
             <div>
               <h1 className="text-4xl font-playfair italic mb-2">{getGreeting()}, Ariel!</h1>
               <div className="flex items-center gap-2 text-white/50 text-xs font-inter tracking-[0.2em] uppercase">
-                Welcome to your dashboard &bull; Powered by DarkWave Studios
+                Welcome to your dashboard
               </div>
             </div>
             <button 
@@ -165,7 +199,8 @@ export function AdminDashboard() {
               { id: 'overview', label: 'Overview', icon: Activity },
               { id: 'services', label: 'Service Manager', icon: Edit3 },
               { id: 'marketing', label: 'Marketing Hub', icon: QrCode },
-              { id: 'memberships', label: 'Memberships', icon: CreditCard }
+              { id: 'memberships', label: 'Memberships', icon: CreditCard },
+              { id: 'security', label: 'Security', icon: Shield }
             ].map(tab => (
               <button
                 key={tab.id}
@@ -211,17 +246,28 @@ export function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="bg-wh-card p-8 rounded-3xl border border-wh-pink flex flex-col gap-4 relative overflow-hidden shadow-[0_0_30px_rgba(255,42,117,0.15)]">
-                <div className="flex justify-between items-start z-10">
+              <div className="bg-wh-card p-8 rounded-3xl border border-white/10 flex flex-col gap-4 relative overflow-hidden group hover:border-white/20 transition-all">
+                <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-wh-pink/80 text-xs font-inter tracking-[0.2em] uppercase mb-2 font-bold">Platform Fee (20%)</p>
-                    <h3 className="text-5xl font-bold text-wh-pink">${(analytics?.trustLayerFee || 0).toLocaleString()}</h3>
+                    <p className="text-white/40 text-xs font-inter tracking-[0.2em] uppercase mb-2">Total Page Views</p>
+                    <h3 className="text-5xl font-light">{analytics?.totalPageViews || 0}</h3>
                   </div>
-                  <div className="p-4 bg-wh-pink/10 rounded-2xl text-wh-pink">
+                  <div className="p-4 bg-white/5 rounded-2xl text-white/80 group-hover:bg-white/10 transition-colors">
                     <Activity className="w-6 h-6" />
                   </div>
                 </div>
-                <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-wh-pink/20 blur-[60px]" />
+              </div>
+
+              <div className="bg-wh-card p-8 rounded-3xl border border-white/10 flex flex-col gap-4 relative overflow-hidden group hover:border-white/20 transition-all">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-white/40 text-xs font-inter tracking-[0.2em] uppercase mb-2">Unique Visitors</p>
+                    <h3 className="text-5xl font-light">{analytics?.totalUniqueVisitors || 0}</h3>
+                  </div>
+                  <div className="p-4 bg-white/5 rounded-2xl text-white/80 group-hover:bg-white/10 transition-colors">
+                    <Users className="w-6 h-6" />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -514,6 +560,50 @@ export function AdminDashboard() {
                 </button>
               </div>
 
+            </div>
+          </div>
+        )}
+
+        {/* SECURITY TAB */}
+        {activeTab === 'security' && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex justify-between items-end">
+              <div>
+                <h2 className="text-3xl font-playfair italic mb-2">Security & Access</h2>
+                <p className="text-white/50 font-outfit text-sm">Update your owner access code</p>
+              </div>
+              <Shield className="w-8 h-8 text-white/20" />
+            </div>
+
+            <div className="bg-wh-card p-8 rounded-3xl border border-white/10 relative overflow-hidden group hover:border-white/20 transition-all">
+              <form onSubmit={handleUpdatePin} className="flex flex-col md:flex-row gap-6 items-end">
+                <div className="flex-1 w-full">
+                  <label className="block text-xs font-inter tracking-[0.2em] uppercase text-white/40 mb-3">New Access Code</label>
+                  <input
+                    type="password"
+                    value={newPin}
+                    onChange={(e) => setNewPin(e.target.value)}
+                    placeholder="••••"
+                    className="w-full bg-black/50 border border-white/10 rounded-2xl p-4 text-white placeholder:text-white/20 focus:outline-none focus:border-wh-pink transition-colors text-2xl tracking-[0.5em] text-center md:text-left"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={settingsLoading || !newPin}
+                  className="w-full md:w-auto bg-wh-pink text-black px-10 py-5 rounded-2xl font-inter font-bold tracking-widest uppercase hover:bg-white transition-all disabled:opacity-50 text-sm whitespace-nowrap"
+                >
+                  {settingsLoading ? 'Updating...' : 'Update Access'}
+                </button>
+              </form>
+
+              {error && (
+                <p className="text-red-400 mt-4 text-sm font-outfit animate-in fade-in">{error}</p>
+              )}
+              {settingsSuccess && (
+                <p className="text-[#00ff00] mt-4 text-sm font-outfit animate-in fade-in flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4" /> {settingsSuccess}
+                </p>
+              )}
             </div>
           </div>
         )}

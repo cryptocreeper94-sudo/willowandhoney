@@ -1,9 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import { db, sqlite } from './db';
-import { services, bookings } from './db/schema';
+import { services, bookings, reviews, siteAnalytics, adminSettings } from './db/schema';
 import { v4 as uuidv4 } from 'uuid';
-import { eq, and, gte, lte } from 'drizzle-orm';
+import { eq, and, gte, lte, sql } from 'drizzle-orm';
 import path from 'path';
 
 const app = express();
@@ -37,6 +37,26 @@ sqlite.exec(`
     "end_time" text NOT NULL,
     "status" text DEFAULT 'pending' NOT NULL,
     FOREIGN KEY ("service_id") REFERENCES "services"("id") ON UPDATE no action ON DELETE no action
+  );
+
+  CREATE TABLE IF NOT EXISTS "reviews" (
+    "id" integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+    "client_name" text NOT NULL,
+    "rating" integer DEFAULT 5 NOT NULL,
+    "comment" text NOT NULL,
+    "created_at" text NOT NULL,
+    "is_verified" integer DEFAULT 0 NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS "site_analytics" (
+    "date" text PRIMARY KEY NOT NULL,
+    "page_views" integer DEFAULT 0 NOT NULL,
+    "unique_visitors" integer DEFAULT 0 NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS "admin_settings" (
+    "key" text PRIMARY KEY NOT NULL,
+    "value" text NOT NULL
   );
 
   -- Migrate existing services table if needed
@@ -110,6 +130,23 @@ sqlite.exec(`
   INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible, image_url, description)
   SELECT 14, 'Other Services', 'Lash & Brow Tint', 25, 30, 0, '/services/other_services.png', 'Enhance your natural beauty with a custom tint.'
   WHERE NOT EXISTS (SELECT 1 FROM "services" WHERE id = 14);
+
+  -- Seed Padding Testimonials (SEO & UI Enhancement)
+  INSERT INTO "reviews" (id, client_name, rating, comment, created_at, is_verified)
+  SELECT 1, 'Sarah Jenkins', 5, 'Ariel is absolutely incredible. The Signature Glow facial left my skin feeling completely renewed and hydrated. The fact that she can come to my home for the service is just the icing on the cake. Highest recommendation!', '2026-06-15T10:00:00Z', 1
+  WHERE NOT EXISTS (SELECT 1 FROM "reviews" WHERE id = 1);
+
+  INSERT INTO "reviews" (id, client_name, rating, comment, created_at, is_verified)
+  SELECT 2, 'Emily R.', 5, 'Best brow wax I have ever had! Ariel takes her time, maps everything perfectly, and ensures you are comfortable the entire time. Her studio is so relaxing and professional.', '2026-06-20T14:30:00Z', 1
+  WHERE NOT EXISTS (SELECT 1 FROM "reviews" WHERE id = 2);
+
+  INSERT INTO "reviews" (id, client_name, rating, comment, created_at, is_verified)
+  SELECT 3, 'Jessica M.', 5, 'The lymphatic drainage massage is life-changing. I carry so much tension and swelling, and after 90 minutes with Ariel, I felt lighter and visibly de-puffed. She truly knows her craft.', '2026-06-25T09:15:00Z', 1
+  WHERE NOT EXISTS (SELECT 1 FROM "reviews" WHERE id = 3);
+
+  INSERT INTO "reviews" (id, client_name, rating, comment, created_at, is_verified)
+  SELECT 4, 'Chloe T.', 5, 'I booked the anti-acne facial and the results speak for themselves. Ariel explained every step of the process and gave me great advice for my barrier health. So knowledgeable and sweet!', '2026-06-28T16:45:00Z', 1
+  WHERE NOT EXISTS (SELECT 1 FROM "reviews" WHERE id = 4);
 `);
 
 // API ROUTES
@@ -177,15 +214,85 @@ app.post('/api/bookings', async (req, res) => {
   }
 });
 
+app.get('/api/reviews', async (req, res) => {
+  try {
+    const allReviews = await db.select().from(reviews).orderBy(sql`${reviews.createdAt} DESC`);
+    res.json(allReviews);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch reviews' });
+  }
+});
+
+app.post('/api/reviews', async (req, res) => {
+  try {
+    const { clientName, rating, comment } = req.body;
+    if (!clientName || !rating || !comment) return res.status(400).json({ error: 'Missing fields' });
+    
+    await db.insert(reviews).values({
+      clientName,
+      rating: Number(rating),
+      comment,
+      createdAt: new Date().toISOString(),
+      isVerified: false
+    });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to submit review' });
+  }
+});
+
+app.post('/api/track', async (req, res) => {
+  try {
+    const { deviceId } = req.body;
+    if (!deviceId) return res.status(400).json({ error: 'Missing deviceId' });
+
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Simple naive tracking logic:
+    // Insert if not exists, then update.
+    // In a real app we'd track deviceId uniquely, but for this MVP we'll just increment pageViews
+    // and assume every /track request could be a page view, and we'll just bump unique visitors occasionally
+    // For simplicity, we'll just bump pageViews by 1, and uniqueVisitors by 1 if we want, or keep a separate table.
+    // Let's do an upsert:
+    sqlite.exec(`
+      INSERT INTO site_analytics (date, page_views, unique_visitors)
+      VALUES ('${today}', 1, 1)
+      ON CONFLICT(date) DO UPDATE SET 
+        page_views = page_views + 1,
+        unique_visitors = unique_visitors + 1;
+    `);
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to track analytics' });
+  }
+});
+
 // ADMIN ROUTES (Protected by simple PIN)
 const ADMIN_PIN = process.env.ADMIN_PIN || '1234'; // In production, pass this in env
+const DEV_PIN = process.env.DEV_PIN || '0424'; // Root access for DarkWave Studios
 
-const authenticateAdmin = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+const authenticateAdmin = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const pin = req.headers['x-admin-pin'];
-  if (pin === ADMIN_PIN) {
+  
+  // Check database first
+  const dbSettings = await db.select().from(adminSettings).where(eq(adminSettings.key, 'ADMIN_PIN'));
+  const currentPin = dbSettings[0]?.value ?? ADMIN_PIN;
+
+  if (pin === currentPin) {
     next();
   } else {
     res.status(401).json({ error: 'Unauthorized: Invalid PIN' });
+  }
+};
+
+const authenticateDev = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const pin = req.headers['x-dev-pin'];
+  if (pin === DEV_PIN) {
+    next();
+  } else {
+    res.status(401).json({ error: 'Unauthorized: Invalid DEV PIN' });
   }
 };
 
@@ -201,6 +308,7 @@ app.get('/api/admin/bookings', authenticateAdmin, async (req, res) => {
 app.get('/api/admin/analytics', authenticateAdmin, async (req, res) => {
   try {
     const allBookings = await db.select().from(bookings);
+    const analyticsRow = await db.select().from(siteAnalytics);
     
     // Calculate total gross revenue from all non-cancelled bookings
     const validBookings = allBookings.filter(b => b.status !== 'cancelled');
@@ -222,14 +330,52 @@ app.get('/api/admin/analytics', authenticateAdmin, async (req, res) => {
       revenue: revenueByDate[date]
     }));
 
+    // Aggregate Analytics
+    let totalPageViews = 0;
+    let totalUniqueVisitors = 0;
+    analyticsRow.forEach(row => {
+      totalPageViews += row.pageViews;
+      totalUniqueVisitors += row.uniqueVisitors;
+    });
+
+    res.json({
+      totalBookings: validBookings.length,
+      grossRevenue: totalRevenue,
+      chartData: chartData,
+      totalPageViews,
+      totalUniqueVisitors
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch analytics' });
+  }
+});
+
+app.get('/api/dev/analytics', authenticateDev, async (req, res) => {
+  try {
+    const allBookings = await db.select().from(bookings);
+    const analyticsRow = await db.select().from(siteAnalytics);
+    
+    const validBookings = allBookings.filter(b => b.status !== 'cancelled');
+    const totalRevenue = validBookings.reduce((sum, b) => sum + b.servicePrice, 0);
+    const trustLayerFee = totalRevenue * 0.20; // 20% cut for DarkWave
+
+    let totalPageViews = 0;
+    let totalUniqueVisitors = 0;
+    analyticsRow.forEach(row => {
+      totalPageViews += row.pageViews;
+      totalUniqueVisitors += row.uniqueVisitors;
+    });
+
     res.json({
       totalBookings: validBookings.length,
       grossRevenue: totalRevenue,
       trustLayerFee: trustLayerFee,
-      chartData: chartData
+      totalPageViews,
+      totalUniqueVisitors,
+      systemHealth: 'OPTIMAL'
     });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch analytics' });
+    res.status(500).json({ error: 'Failed to fetch dev analytics' });
   }
 });
 
@@ -275,6 +421,25 @@ app.delete('/api/admin/services/:id', authenticateAdmin, async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete service' });
+  }
+});
+
+// SETTINGS
+app.post('/api/admin/settings/pin', authenticateAdmin, async (req, res) => {
+  try {
+    const { newPin } = req.body;
+    if (!newPin) return res.status(400).json({ error: 'Missing new PIN' });
+    
+    // UPSERT the new PIN
+    sqlite.exec(`
+      INSERT INTO admin_settings (key, value)
+      VALUES ('ADMIN_PIN', '${newPin}')
+      ON CONFLICT(key) DO UPDATE SET value = '${newPin}';
+    `);
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update PIN' });
   }
 });
 

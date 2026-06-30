@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle } from 'lucide-react';
-import { DayPicker } from 'react-day-picker';
-import 'react-day-picker/dist/style.css';
+import { Calendar } from '@/components/ui/calendar';
 
 interface BottomSheetBookingProps {
   isOpen: boolean;
@@ -41,6 +40,43 @@ export function BottomSheetBooking({ isOpen, onClose, service }: BottomSheetBook
       setSelectedTime(null);
     }, 500);
   };
+
+  // Dynamically calculate available times based on duration and mobile status
+  const getAvailableTimes = () => {
+    if (!service) return [];
+    
+    // Determine required block duration in minutes
+    let requiredMinutes = service.durationMinutes;
+    if (isMobile) {
+      requiredMinutes = Math.max(requiredMinutes, 120); // Mobile requires at least 2 hours
+    }
+
+    // Ariel's window is 9:00 AM (9 * 60 = 540) to 12:00 PM (12 * 60 = 720)
+    const startTime = 9 * 60; 
+    const endTime = 12 * 60;
+    
+    const slots: string[] = [];
+    let currentTime = startTime;
+
+    while (currentTime + requiredMinutes <= endTime) {
+      const hours = Math.floor(currentTime / 60);
+      const mins = currentTime % 60;
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      const displayHours = hours > 12 ? hours - 12 : hours;
+      const timeString = `${displayHours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')} ${ampm}`;
+      
+      slots.push(timeString);
+      
+      // Increment by the required block so they don't overlap, 
+      // or standard 30 min increments if you want overlapping start choices?
+      // Since it's strict, let's just offer slots that fit sequentially to avoid complex overlap math for MVP
+      currentTime += requiredMinutes;
+    }
+
+    return slots;
+  };
+
+  const availableTimes = getAvailableTimes();
 
   return (
     <AnimatePresence>
@@ -98,34 +134,36 @@ export function BottomSheetBooking({ isOpen, onClose, service }: BottomSheetBook
                 {step === 1 && (
                   <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
                     <div className="bg-black/30 rounded-3xl p-6 border border-white/5 flex justify-center">
-                      <DayPicker 
+                      <Calendar 
                         mode="single"
                         selected={selectedDate}
                         onSelect={setSelectedDate}
-                        disabled={{ dayOfWeek: [1, 2, 3, 4, 5] }}
+                        disabled={(date) => date.getDay() !== 0 && date.getDay() !== 6} // 0 is Sunday, 6 is Saturday
                         className="text-white"
-                        modifiersClassNames={{
-                          selected: 'bg-wh-pink text-white font-bold rounded-full shadow-[0_0_15px_rgba(255,42,117,0.5)]',
-                          today: 'text-wh-pink font-bold border border-wh-pink rounded-full'
-                        }}
                       />
                     </div>
 
                     {selectedDate && (
-                      <div className="grid grid-cols-3 gap-3">
-                        {['09:00 AM', '10:00 AM', '11:00 AM', '01:00 PM', '02:00 PM', '03:00 PM'].map(time => (
-                          <button
-                            key={time}
-                            onClick={() => setSelectedTime(time)}
-                            className={`py-3 rounded-2xl border text-xs font-bold transition-all ${
-                              selectedTime === time 
-                                ? 'bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.3)]' 
-                                : 'border-white/10 text-white/50 hover:border-wh-pink hover:text-white'
-                            }`}
-                          >
-                            {time}
-                          </button>
-                        ))}
+                      <div className="grid grid-cols-2 gap-3 mt-6">
+                        {availableTimes.length > 0 ? (
+                          availableTimes.map(time => (
+                            <button
+                              key={time}
+                              onClick={() => setSelectedTime(time)}
+                              className={`py-3 rounded-2xl border text-xs font-bold transition-all ${
+                                selectedTime === time 
+                                  ? 'bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.3)]' 
+                                  : 'border-white/10 text-white/50 hover:border-wh-pink hover:text-white'
+                              }`}
+                            >
+                              {time}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="col-span-2 text-center text-white/50 text-xs py-4">
+                            No available slots for this duration today.
+                          </div>
+                        )}
                       </div>
                     )}
 
