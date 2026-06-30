@@ -14,17 +14,18 @@ COPY server/package*.json ./
 RUN npm install
 COPY server/ ./
 RUN npm run build
+# Prune dev dependencies so we can copy a clean node_modules to production
+RUN npm prune --production
 
 # ---- Production ----
 FROM node:20-alpine
 WORKDIR /app
 COPY --from=server-builder /app/server/package*.json ./server/
 COPY --from=server-builder /app/server/dist ./server/dist
+COPY --from=server-builder /app/server/node_modules ./server/node_modules
 COPY --from=client-builder /app/client/dist ./client/dist
 
 WORKDIR /app/server
-RUN apk add --no-cache python3 make g++
-RUN npm install --production
 
 EXPOSE 3000
 CMD ["npm", "start"]
