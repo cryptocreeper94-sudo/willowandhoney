@@ -104,6 +104,24 @@ export default function App() {
                 Hi, I'm Ariel. I specialize in bringing high-end, luxury esthetic treatments directly to your home. Whether you need a deep lymphatic drainage massage or a signature anti-aging facial, my goal is to provide a serene, transformative experience without you ever having to leave your sanctuary.
               </p>
             </div>
+
+            {/* Hours & Availability */}
+            <div className="max-w-4xl mx-auto px-6 pb-20 text-center">
+              <h3 className="text-xl font-playfair italic mb-6 text-wh-pink">Availability & Hours</h3>
+              <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto text-sm font-outfit text-white/70">
+                <div className="text-right">Monday - Friday</div>
+                <div className="text-left font-bold text-white">9:00 AM - 6:00 PM</div>
+                
+                <div className="text-right">Saturday</div>
+                <div className="text-left font-bold text-white">10:00 AM - 4:00 PM</div>
+                
+                <div className="text-right text-white/40">Sunday</div>
+                <div className="text-left font-bold text-white/40">Closed</div>
+              </div>
+              <p className="mt-8 text-xs font-outfit text-white/50 uppercase tracking-widest">
+                * Available for In-Home Travel & Studio Appointments
+              </p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
