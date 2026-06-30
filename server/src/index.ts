@@ -38,21 +38,61 @@ sqlite.exec(`
   );
 
   -- Seed Initial Data if database is empty
-  INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible)
-  SELECT 1, 'Facials', 'Signature Sculpting Facial', 150, 60, 1
+  INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible, image_url, description)
+  SELECT 1, 'Body Treatment', 'Back Treatment', 50, 90, 1, '/services/body_treatment.png', 'Relaxing back treatment and cleansing.'
   WHERE NOT EXISTS (SELECT 1 FROM "services" WHERE id = 1);
 
-  INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible)
-  SELECT 2, 'Facials', 'Luxury Lymphatic Drainage', 200, 90, 1
+  INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible, image_url, description)
+  SELECT 2, 'Body Treatment', 'Lymphatic Drainage Massage', 30, 90, 1, '/services/body_treatment.png', 'Deep lymphatic drainage to reduce swelling and promote healing.'
   WHERE NOT EXISTS (SELECT 1 FROM "services" WHERE id = 2);
 
-  INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible)
-  SELECT 3, 'Brows & Lashes', 'Lash Lift & Tint', 85, 45, 0
+  INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible, image_url, description)
+  SELECT 3, 'Facials', '30 Minute Facial', 25, 30, 1, '/services/facials.png', 'A quick, refreshing facial to glow on the go.'
   WHERE NOT EXISTS (SELECT 1 FROM "services" WHERE id = 3);
-
-  INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible)
-  SELECT 4, 'Brows & Lashes', 'Brow Lamination', 100, 60, 0
+  
+  INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible, image_url, description)
+  SELECT 4, 'Facials', '60 Minute Facial', 50, 90, 1, '/services/facials.png', 'A full hour of deep relaxation and skin rejuvenation.'
   WHERE NOT EXISTS (SELECT 1 FROM "services" WHERE id = 4);
+
+  INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible, image_url, description)
+  SELECT 5, 'Facials', 'Anti Acne Facial', 60, 90, 1, '/services/facials.png', 'Targeted treatment to clear pores and reduce inflammation.'
+  WHERE NOT EXISTS (SELECT 1 FROM "services" WHERE id = 5);
+
+  INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible, image_url, description)
+  SELECT 6, 'Facials', 'Anti Wrinkle Facial', 60, 90, 1, '/services/facials.png', 'Firms and plumps the skin to reduce the appearance of fine lines.'
+  WHERE NOT EXISTS (SELECT 1 FROM "services" WHERE id = 6);
+
+  INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible, image_url, description)
+  SELECT 7, 'Facials', 'Facial Sculpting Massage', 25, 90, 1, '/services/facials.png', 'Advanced massage techniques to lift and tone facial muscles.'
+  WHERE NOT EXISTS (SELECT 1 FROM "services" WHERE id = 7);
+
+  INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible, image_url, description)
+  SELECT 8, 'Hair Removal', 'Brow Wax', 10, 30, 0, '/services/hair_removal.png', 'Expert brow shaping and waxing.'
+  WHERE NOT EXISTS (SELECT 1 FROM "services" WHERE id = 8);
+
+  INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible, image_url, description)
+  SELECT 9, 'Hair Removal', 'Face Wax', 15, 30, 0, '/services/hair_removal.png', 'Smooth and flawless facial hair removal.'
+  WHERE NOT EXISTS (SELECT 1 FROM "services" WHERE id = 9);
+
+  INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible, image_url, description)
+  SELECT 10, 'Hair Removal', 'Underarm Wax', 15, 30, 0, '/services/hair_removal.png', 'Clean and gentle underarm waxing.'
+  WHERE NOT EXISTS (SELECT 1 FROM "services" WHERE id = 10);
+
+  INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible, image_url, description)
+  SELECT 11, 'Hair Removal', 'Half Leg / Half Arm Wax', 20, 30, 0, '/services/hair_removal.png', 'Silky smooth hair removal.'
+  WHERE NOT EXISTS (SELECT 1 FROM "services" WHERE id = 11);
+
+  INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible, image_url, description)
+  SELECT 12, 'Hair Removal', 'Full Leg / Full Arm Wax', 30, 30, 0, '/services/hair_removal.png', 'Complete silky smooth hair removal.'
+  WHERE NOT EXISTS (SELECT 1 FROM "services" WHERE id = 12);
+
+  INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible, image_url, description)
+  SELECT 13, 'Other Services', 'Lash Lift', 25, 30, 0, '/services/other_services.png', 'Beautifully lifted lashes.'
+  WHERE NOT EXISTS (SELECT 1 FROM "services" WHERE id = 13);
+
+  INSERT INTO "services" (id, category, name, price, duration_minutes, is_mobile_eligible, image_url, description)
+  SELECT 14, 'Other Services', 'Lash & Brow Tint', 25, 30, 0, '/services/other_services.png', 'Enhance your natural beauty with a custom tint.'
+  WHERE NOT EXISTS (SELECT 1 FROM "services" WHERE id = 14);
 `);
 
 // API ROUTES

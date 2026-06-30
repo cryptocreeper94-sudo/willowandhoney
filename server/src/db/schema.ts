@@ -7,6 +7,8 @@ export const services = sqliteTable('services', {
   price: integer('price').notNull(), // stored in whole dollars
   durationMinutes: integer('duration_minutes').notNull(),
   isMobileEligible: integer('is_mobile_eligible', { mode: 'boolean' }).notNull().default(true),
+  imageUrl: text('image_url'),
+  description: text('description'),
 });
 
 export const bookings = sqliteTable('bookings', {
