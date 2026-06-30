@@ -210,6 +210,6 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../../client/dist/index.html'));
 });
 
-app.listen(PORT, () => {
+app.listen(PORT as number, '0.0.0.0', () => {
   console.log(`Willow & Honey scheduling API running on port ${PORT}`);
 });
