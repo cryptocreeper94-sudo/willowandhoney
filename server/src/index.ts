@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { db } from './db';
+import { db, sqlite } from './db';
 import { services, bookings } from './db/schema';
 import { v4 as uuidv4 } from 'uuid';
 import { eq, and, gte, lte } from 'drizzle-orm';
@@ -11,6 +11,32 @@ app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
+
+// Initialize Database Tables if they don't exist
+sqlite.exec(`
+  CREATE TABLE IF NOT EXISTS "services" (
+    "id" integer PRIMARY KEY NOT NULL,
+    "category" text NOT NULL,
+    "name" text NOT NULL,
+    "price" integer NOT NULL,
+    "duration_minutes" integer NOT NULL,
+    "is_mobile_eligible" integer DEFAULT 0 NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS "bookings" (
+    "id" text PRIMARY KEY NOT NULL,
+    "client_name" text NOT NULL,
+    "client_email" text NOT NULL,
+    "client_phone" text,
+    "service_id" integer NOT NULL,
+    "service_price" integer NOT NULL,
+    "is_mobile" integer DEFAULT 0 NOT NULL,
+    "address" text,
+    "start_time" text NOT NULL,
+    "end_time" text NOT NULL,
+    "status" text DEFAULT 'pending' NOT NULL,
+    FOREIGN KEY ("service_id") REFERENCES "services"("id") ON UPDATE no action ON DELETE no action
+  );
+`);
 
 // API ROUTES
 app.get('/api/services', async (req, res) => {

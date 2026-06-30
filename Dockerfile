@@ -20,7 +20,6 @@ FROM node:20-alpine
 WORKDIR /app
 COPY --from=server-builder /app/server/package*.json ./server/
 COPY --from=server-builder /app/server/dist ./server/dist
-COPY --from=server-builder /app/server/src/db/sqlite.db ./server/dist/db/sqlite.db 
 COPY --from=client-builder /app/client/dist ./client/dist
 
 WORKDIR /app/server
@@ -28,4 +27,4 @@ RUN apk add --no-cache python3 make g++
 RUN npm install --production
 
 EXPOSE 3000
-CMD ["node", "dist/index.js"]
+CMD ["npm", "start"]
