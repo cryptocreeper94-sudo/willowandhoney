@@ -8,6 +8,13 @@ export default function App() {
   const [selectedService, setSelectedService] = useState<any | null>(null);
   const [services, setServices] = useState<any[]>([]);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const heroImages = [
+    '/hero_mobile.png?v=1',
+    '/hero_2.png',
+    '/hero_3.png'
+  ];
 
   // Easter egg state
   const lastClickTime = useRef(0);
@@ -33,6 +40,14 @@ export default function App() {
       .catch(err => console.error("Could not load services", err));
   }, []);
 
+  // Ken Burns Slideshow Timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % heroImages.length);
+    }, 8000); // Change image every 8 seconds
+    return () => clearInterval(timer);
+  }, [heroImages.length]);
+
   const openBooking = (service: any) => {
     setSelectedService(service);
     setIsBookingOpen(true);
@@ -45,23 +60,30 @@ export default function App() {
     <div className="bg-wh-dark text-white min-h-screen pb-32 selection:bg-wh-pink selection:text-white relative overflow-x-hidden no-scrollbar">
       
       {/* PERSISTENT HERO HEADER (Always visible across all tabs) */}
-      <div className="relative w-full h-[50vh] md:h-[60vh] bg-black flex items-center justify-center overflow-hidden rounded-b-[40px] shadow-2xl z-20">
-        <motion.img 
-          src="/hero_mobile.png?v=1" 
-          alt="Ariel"
-          className="absolute inset-0 w-full h-full object-cover opacity-60"
-          initial={{ scale: 1 }}
-          animate={{ scale: 1.1 }}
-          transition={{ duration: 25, ease: 'linear', repeat: Infinity, repeatType: 'reverse' }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-wh-dark via-wh-dark/40 to-black/20" />
+      <div className="relative w-full h-[60vh] md:h-[70vh] bg-black flex flex-col items-center justify-end overflow-hidden rounded-b-[40px] shadow-2xl z-20 pb-12">
+        <AnimatePresence mode="wait">
+          <motion.img 
+            key={currentSlide}
+            src={heroImages[currentSlide]} 
+            alt="Hero Slideshow"
+            className="absolute inset-0 w-full h-full object-cover opacity-60"
+            initial={{ scale: 1.0, opacity: 0 }}
+            animate={{ scale: 1.15, opacity: 0.6 }}
+            exit={{ opacity: 0 }}
+            transition={{ 
+              opacity: { duration: 2 },
+              scale: { duration: 15, ease: 'linear' }
+            }}
+          />
+        </AnimatePresence>
+        <div className="absolute inset-0 bg-gradient-to-t from-wh-dark via-wh-dark/30 to-black/20 pointer-events-none" />
         
-        <div className="relative z-10 text-center px-6 mt-10">
+        <div className="relative z-10 text-center px-6 mt-auto">
           <motion.h1 
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="text-6xl md:text-8xl font-playfair italic mb-4 drop-shadow-2xl"
+            className="text-6xl md:text-8xl font-playfair italic mb-4 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)]"
           >
             Willow & Honey
           </motion.h1>
@@ -69,7 +91,7 @@ export default function App() {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="text-white/80 font-outfit uppercase tracking-[0.3em] text-xs md:text-sm drop-shadow-lg"
+            className="text-white/90 font-outfit uppercase tracking-[0.3em] text-xs md:text-sm drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] font-bold"
           >
             Luxury In-Home & Studio Esthetics
           </motion.p>
