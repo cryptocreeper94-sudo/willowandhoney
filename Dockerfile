@@ -1,5 +1,5 @@
 # ---- Build Client ----
-FROM node:18-alpine AS client-builder
+FROM node:20-alpine AS client-builder
 WORKDIR /app/client
 COPY client/package*.json ./
 RUN npm install
@@ -7,7 +7,7 @@ COPY client/ ./
 RUN npm run build
 
 # ---- Build Server ----
-FROM node:18-alpine AS server-builder
+FROM node:20-alpine AS server-builder
 WORKDIR /app/server
 RUN apk add --no-cache python3 make g++
 COPY server/package*.json ./
@@ -16,7 +16,7 @@ COPY server/ ./
 RUN npm run build
 
 # ---- Production ----
-FROM node:18-alpine
+FROM node:20-alpine
 WORKDIR /app
 COPY --from=server-builder /app/server/package*.json ./server/
 COPY --from=server-builder /app/server/dist ./server/dist
