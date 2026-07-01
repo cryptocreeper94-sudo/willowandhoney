@@ -13,8 +13,11 @@ export default function App() {
 
   const heroImages = [
     '/hero_mobile.png?v=1',
-    '/hero2.png',
-    '/hero3.png'
+    '/services/facials.png',
+    '/services/body_treatment.png',
+    '/services/hair_removal.png',
+    '/services/other_services.png',
+    '/hero1.png'
   ];
 
   // Easter egg state
