@@ -34,6 +34,7 @@ export default function App() {
   const [services, setServices] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [isPWA, setIsPWA] = useState(false);
 
@@ -67,6 +68,15 @@ export default function App() {
       setIsPWA(true);
     }
   };
+
+  const heroImages = [
+    '/hero_mobile.png?v=1',
+    '/services/facials.png',
+    '/services/body_treatment.png',
+    '/services/hair_removal.png',
+    '/services/other_services.png',
+    '/hero1.png'
+  ];
 
   const lastClickTime = useRef(0);
   const clickCount = useRef(0);
@@ -117,6 +127,14 @@ export default function App() {
     }).catch(console.error);
   }, []);
 
+  // Ken Burns Slideshow Timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % heroImages.length);
+    }, 8000); // Change image every 8 seconds
+    return () => clearInterval(timer);
+  }, [heroImages.length]);
+
   const openBooking = (service: any) => {
     setSelectedService(service);
     setIsBookingOpen(true);
@@ -154,38 +172,21 @@ export default function App() {
           style={{ y: yHero, opacity: opacityHero }}
           className="absolute inset-0 w-full h-full"
         >
-          {/* LIQUID MESH GRADIENT PLACEHOLDER */}
-          <div className="absolute inset-0 opacity-80" style={{
-            background: 'radial-gradient(circle at 50% 50%, #4a1c40 0%, #000000 80%)'
-          }} />
-          <motion.div 
-            animate={{ 
-              scale: [1, 1.2, 1],
-              rotate: [0, 90, 0],
-              x: [0, 50, -50, 0],
-              y: [0, -50, 50, 0]
-            }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] rounded-full bg-wh-pink/20 blur-[120px]"
-          />
-          <motion.div 
-            animate={{ 
-              scale: [1, 1.5, 1],
-              rotate: [0, -90, 0],
-              x: [0, -50, 50, 0],
-              y: [0, 50, -50, 0]
-            }}
-            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-            className="absolute top-[30%] -right-[10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[100px]"
-          />
-          <motion.div 
-            animate={{ 
-              scale: [1, 1.1, 1],
-              y: [0, 100, 0]
-            }}
-            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -bottom-[20%] left-[20%] w-[80%] h-[50%] rounded-full bg-wh-gold/10 blur-[100px]"
-          />
+          <AnimatePresence mode="wait">
+            <motion.img 
+              key={currentSlide}
+              src={heroImages[currentSlide]} 
+              alt="Hero Slideshow"
+              className="absolute inset-0 w-full h-full object-cover opacity-60"
+              initial={{ scale: 1.0, opacity: 0 }}
+              animate={{ scale: 1.15, opacity: 0.6 }}
+              exit={{ opacity: 0 }}
+              transition={{ 
+                opacity: { duration: 2 },
+                scale: { duration: 15, ease: 'linear' }
+              }}
+            />
+          </AnimatePresence>
         </motion.div>
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none z-10" />
         
