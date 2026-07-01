@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
@@ -20,12 +20,44 @@ export function BottomSheetBooking({ isOpen, onClose, service }: BottomSheetBook
   const [isSuccess, setIsSuccess] = useState(false);
 
   const handleBook = async () => {
+    if (!service || !selectedDate || !selectedTime) return;
     setIsSubmitting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Build ISO start and end times from selectedDate + selectedTime string
+      const [timePart, ampm] = selectedTime.split(' ');
+      const [hStr, mStr] = timePart.split(':');
+      let hours = parseInt(hStr, 10);
+      const minutes = parseInt(mStr, 10);
+      if (ampm === 'PM' && hours !== 12) hours += 12;
+      if (ampm === 'AM' && hours === 12) hours = 0;
+      const startDate = new Date(selectedDate);
+      startDate.setHours(hours, minutes, 0, 0);
+      const durationMinutes = isMobile
+        ? Math.max(service.durationMinutes, 120)
+        : service.durationMinutes;
+      const endDate = new Date(startDate.getTime() + durationMinutes * 60 * 1000);
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientName: clientInfo.name,
+          clientEmail: clientInfo.email,
+          clientPhone: clientInfo.phone,
+          serviceId: service.id,
+          isMobile,
+          address: isMobile ? address : null,
+          startTime: startDate.toISOString(),
+          endTime: endDate.toISOString(),
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Booking failed');
+      }
       setIsSuccess(true);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      alert(e.message || 'Something went wrong. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -41,42 +73,23 @@ export function BottomSheetBooking({ isOpen, onClose, service }: BottomSheetBook
     }, 500);
   };
 
-  // Dynamically calculate available times based on duration and mobile status
-  const getAvailableTimes = () => {
-    if (!service) return [];
-    
-    // Determine required block duration in minutes
-    let requiredMinutes = service.durationMinutes;
-    if (isMobile) {
-      requiredMinutes = Math.max(requiredMinutes, 120); // Mobile requires at least 2 hours
+  const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  // Fetch real availability from server when date changes
+  useEffect(() => {
+    if (!selectedDate || !service) {
+      setAvailableTimes([]);
+      return;
     }
-
-    // Ariel's window is 9:00 AM (9 * 60 = 540) to 12:00 PM (12 * 60 = 720)
-    const startTime = 9 * 60; 
-    const endTime = 12 * 60;
-    
-    const slots: string[] = [];
-    let currentTime = startTime;
-
-    while (currentTime + requiredMinutes <= endTime) {
-      const hours = Math.floor(currentTime / 60);
-      const mins = currentTime % 60;
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      const displayHours = hours > 12 ? hours - 12 : hours;
-      const timeString = `${displayHours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')} ${ampm}`;
-      
-      slots.push(timeString);
-      
-      // Increment by the required block so they don't overlap, 
-      // or standard 30 min increments if you want overlapping start choices?
-      // Since it's strict, let's just offer slots that fit sequentially to avoid complex overlap math for MVP
-      currentTime += requiredMinutes;
-    }
-
-    return slots;
-  };
-
-  const availableTimes = getAvailableTimes();
+    setLoadingSlots(true);
+    setSelectedTime(null);
+    const dateStr = selectedDate.toISOString().split('T')[0];
+    fetch(`/api/availability?date=${dateStr}&serviceId=${service.id}&isMobile=${isMobile}`)
+      .then(r => r.json())
+      .then(data => setAvailableTimes(data.slots || []))
+      .catch(() => setAvailableTimes([]))
+      .finally(() => setLoadingSlots(false));
+  }, [selectedDate, service, isMobile]);
 
   return (
     <AnimatePresence>
@@ -145,7 +158,11 @@ export function BottomSheetBooking({ isOpen, onClose, service }: BottomSheetBook
 
                     {selectedDate && (
                       <div className="grid grid-cols-2 gap-3 mt-6">
-                        {availableTimes.length > 0 ? (
+                        {loadingSlots ? (
+                          <div className="col-span-2 text-center text-white/50 text-xs py-4 animate-pulse">
+                            Checking availability...
+                          </div>
+                        ) : availableTimes.length > 0 ? (
                           availableTimes.map(time => (
                             <button
                               key={time}

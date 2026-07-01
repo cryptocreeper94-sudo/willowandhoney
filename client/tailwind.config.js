@@ -17,6 +17,9 @@ export default {
         'wh-card': '#1a1a20',
         'wh-gold': '#d4af37', // A touch of luxury western glam
       },
+      animation: {
+        'spin-slow': 'spin 10s linear infinite',
+      },
     },
   },
   plugins: [],

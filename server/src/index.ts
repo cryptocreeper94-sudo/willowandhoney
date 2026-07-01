@@ -214,6 +214,70 @@ app.post('/api/bookings', async (req, res) => {
   }
 });
 
+// GET /api/availability?date=YYYY-MM-DD&serviceId=N&isMobile=false
+// Returns array of available time strings for that date and service
+app.get('/api/availability', async (req, res) => {
+  try {
+    const { date, serviceId, isMobile } = req.query;
+    if (!date || !serviceId) {
+      return res.status(400).json({ error: 'date and serviceId are required' });
+    }
+    // Load the service to know its duration
+    const [service] = await db.select().from(services).where(eq(services.id, Number(serviceId)));
+    if (!service) return res.status(404).json({ error: 'Service not found' });
+    // Ariel's working window: 9:00 AM to 12:00 PM
+    const WINDOW_START = 9 * 60;  // minutes from midnight
+    const WINDOW_END   = 12 * 60;
+    // Required slot duration in minutes
+    let slotMinutes = service.durationMinutes;
+    if (isMobile === 'true') slotMinutes = Math.max(slotMinutes, 120);
+    // Load existing bookings for this date that are not cancelled
+    const dateStr = date as string; // YYYY-MM-DD
+    const dayStart = `${dateStr}T00:00:00.000Z`;
+    const dayEnd   = `${dateStr}T23:59:59.999Z`;
+    const existingBookings = await db
+      .select({ startTime: bookings.startTime, endTime: bookings.endTime })
+      .from(bookings)
+      .where(
+        and(
+          gte(bookings.startTime, dayStart),
+          lte(bookings.startTime, dayEnd),
+          sql`${bookings.status} != 'cancelled'`
+        )
+      );
+    // Convert existing bookings to blocked minute ranges
+    const blockedRanges = existingBookings.map(b => {
+      const start = new Date(b.startTime);
+      const end   = new Date(b.endTime);
+      const startMins = start.getUTCHours() * 60 + start.getUTCMinutes();
+      const endMins   = end.getUTCHours()   * 60 + end.getUTCMinutes();
+      return { start: startMins, end: endMins };
+    });
+    // Generate candidate slots every 30 minutes within Ariel's window
+    const availableSlots: string[] = [];
+    let cursor = WINDOW_START;
+    while (cursor + slotMinutes <= WINDOW_END) {
+      const slotEnd = cursor + slotMinutes;
+      // Check if this slot overlaps any blocked range
+      const isBlocked = blockedRanges.some(range => cursor < range.end && slotEnd > range.start);
+      if (!isBlocked) {
+        const hours   = Math.floor(cursor / 60);
+        const mins    = cursor % 60;
+        const ampm    = hours >= 12 ? 'PM' : 'AM';
+        const display = hours > 12 ? hours - 12 : hours;
+        availableSlots.push(
+          `${String(display).padStart(2, '0')}:${String(mins).padStart(2, '0')} ${ampm}`
+        );
+      }
+      cursor += 30; // offer every 30-minute start time
+    }
+    res.json({ slots: availableSlots });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to fetch availability' });
+  }
+});
+
 app.get('/api/reviews', async (req, res) => {
   try {
     const allReviews = await db.select().from(reviews).orderBy(sql`${reviews.createdAt} DESC`);

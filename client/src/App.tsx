@@ -13,8 +13,8 @@ export default function App() {
 
   const heroImages = [
     '/hero_mobile.png?v=1',
-    '/hero_2.png',
-    '/hero_3.png'
+    '/hero2.png',
+    '/hero3.png'
   ];
 
   // Easter egg state
@@ -87,7 +87,7 @@ export default function App() {
     <div className="bg-wh-dark text-white min-h-screen pb-32 selection:bg-wh-pink selection:text-white relative overflow-x-hidden no-scrollbar">
       
       {/* PERSISTENT HERO HEADER (Always visible across all tabs) */}
-      <div className="relative w-full h-[60vh] md:h-[70vh] bg-black flex flex-col items-center justify-center md:justify-end overflow-hidden rounded-b-[40px] shadow-2xl z-20 pb-0 md:pb-12">
+      <div className="relative w-full h-[60vh] md:h-[70vh] bg-black flex flex-col items-center justify-end overflow-hidden rounded-b-[40px] shadow-2xl z-20 pb-8 md:pb-12">
         <AnimatePresence mode="wait">
           <motion.img 
             key={currentSlide}
@@ -105,7 +105,7 @@ export default function App() {
         </AnimatePresence>
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
         
-        <div className="relative z-10 text-center px-6 mt-16 md:mt-auto">
+        <div className="relative z-10 text-center px-6">
           <motion.h1 
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -157,7 +157,7 @@ export default function App() {
                 </div>
                 
                 {/* Hours & Availability */}
-                <div className="bg-white/5 border border-white/10 rounded-[40px] p-8 md:p-12 mb-20 backdrop-blur-sm">
+                <div className="bg-white/5 border border-white/10 rounded-[40px] p-8 md:p-12 mb-20 backdrop-blur-sm mt-10">
                   <h3 className="text-2xl font-playfair italic mb-8 text-wh-pink">Availability & Hours</h3>
                   <div className="grid grid-cols-2 gap-y-4 max-w-md mx-auto text-base font-outfit">
                     <div className="text-right text-white/70">Weekends</div>
@@ -201,6 +201,27 @@ export default function App() {
                     ))}
                   </div>
                 </div>
+
+                {/* Credentials */}
+                <div className="flex flex-wrap justify-center gap-4 mb-20">
+                  {[
+                    { icon: '🎓', label: 'Georgia Career Institute', sub: 'Licensed Esthetician' },
+                    { icon: '✦', label: 'Skin Barrier Specialist', sub: 'Facial Sculpting' },
+                    { icon: '🛡️', label: 'Fully Insured', sub: 'Professional Coverage' },
+                    { icon: '📍', label: 'Nashville Area', sub: 'Mobile & Studio' },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="flex items-center gap-3 bg-white/5 border border-wh-gold/20 rounded-2xl px-5 py-4 backdrop-blur-sm"
+                    >
+                      <span className="text-xl">{item.icon}</span>
+                      <div>
+                        <div className="text-white font-outfit font-bold text-sm">{item.label}</div>
+                        <div className="text-white/50 font-outfit text-xs">{item.sub}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </motion.div>
           )}
@@ -220,7 +241,17 @@ export default function App() {
                   <p className="text-white/50 font-outfit uppercase tracking-[0.2em] text-sm">Select a service to schedule an appointment</p>
                 </div>
 
-                {categories.map(category => (
+                {services.length === 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
+                    {[...Array(6)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="rounded-[32px] bg-wh-card border border-white/5 h-[320px] animate-pulse"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  categories.map(category => (
                   <div key={category as string} className="mb-20">
                     <h3 className="text-wh-pink font-outfit uppercase tracking-[0.2em] text-lg mb-8 flex items-center gap-6">
                       <span className="shrink-0">{category as string}</span>
@@ -242,7 +273,22 @@ export default function App() {
                               className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-500 group-hover:scale-105"
                             />
                           ) : (
-                            <div className="absolute inset-0 bg-gradient-to-br from-wh-dark to-black" />
+                            <>
+                              <img
+                                src={
+                                  (category as string).toLowerCase().includes('facial')
+                                    ? '/services/facials.png'
+                                    : (category as string).toLowerCase().includes('body')
+                                    ? '/services/body_treatment.png'
+                                    : (category as string).toLowerCase().includes('hair') || (category as string).toLowerCase().includes('wax')
+                                    ? '/services/hair_removal.png'
+                                    : '/services/other_services.png'
+                                }
+                                alt=""
+                                className="absolute inset-0 w-full h-full object-cover opacity-25 group-hover:opacity-40 transition-opacity duration-500"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-br from-black/60 to-wh-dark/80" />
+                            </>
                           )}
                           
                           {/* Gradient Overlay for Text Readability */}
@@ -251,14 +297,14 @@ export default function App() {
                           <div className="relative z-10 p-8 flex flex-col h-full justify-end">
                             <div className="mb-auto flex justify-end">
                               {service.isMobileEligible && (
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-white bg-wh-pink/80 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg">
-                                  Mobile Travel Available
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-white bg-wh-pink/80 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg whitespace-nowrap">
+                                  ✈ Mobile
                                 </span>
                               )}
                             </div>
                             
                             <div>
-                              <h4 className="text-2xl font-playfair italic text-white mb-3 group-hover:text-wh-pink transition-colors drop-shadow-md">{service.name}</h4>
+                              <h4 className="text-xl font-playfair italic text-white mb-3 group-hover:text-wh-pink transition-colors drop-shadow-md leading-snug line-clamp-2">{service.name}</h4>
                               
                               {service.description && (
                                 <p className="text-white/70 text-sm font-outfit mb-4 line-clamp-2">{service.description}</p>
@@ -279,7 +325,8 @@ export default function App() {
                       ))}
                     </div>
                   </div>
-                ))}
+                  ))
+                )}
               </div>
             </motion.div>
           )}
@@ -293,20 +340,74 @@ export default function App() {
               transition={{ duration: 0.4 }}
               className="w-full flex items-center justify-center pt-16 px-6"
             >
-              <div className="bg-white/5 border border-white/10 p-12 rounded-[40px] text-center max-w-2xl w-full backdrop-blur-xl">
-                <Flower2 className="w-16 h-16 text-wh-pink mx-auto mb-8 animate-spin-slow" style={{ animationDuration: '10s' }} />
-                <h2 className="text-4xl font-playfair italic mb-6">Get in Touch</h2>
-                <p className="text-white/70 font-outfit mb-12 text-lg font-light leading-relaxed">
-                  Follow my journey, view past client transformations, and DM me for any specific skincare questions or custom service inquiries.
+              <div className="w-full max-w-2xl mx-auto space-y-6">
+                {/* Header */}
+                <div className="text-center mb-10">
+                  <h2 className="text-4xl md:text-5xl font-playfair italic mb-3">Connect With Ariel</h2>
+                  <p className="text-white/50 font-outfit uppercase tracking-[0.2em] text-xs">
+                    Follow the Journey · Book via DM · Ask Questions
+                  </p>
+                </div>
+                {/* Photo strip */}
+                <div className="grid grid-cols-2 gap-4 mb-2">
+                  <div className="relative overflow-hidden rounded-[28px] aspect-[3/4] bg-wh-card border border-white/5">
+                    <img
+                      src="/ariel1.jpg"
+                      alt="Ariel"
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  </div>
+                  <div className="relative overflow-hidden rounded-[28px] aspect-[3/4] bg-wh-card border border-white/5">
+                    <img
+                      src="/ariel2.png"
+                      alt="Ariel"
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  </div>
+                </div>
+                {/* Tagline under photos */}
+                <p className="text-center text-white/60 font-outfit font-light text-sm leading-relaxed px-2">
+                  Licensed esthetician specializing in skin barrier health and facial sculpting.
+                  Based in Nashville · Mobile & Studio appointments available.
                 </p>
-                
-                <a 
+                {/* Instagram CTA */}
+                <a
                   href="https://instagram.com/willowandhoney.esthetics"
-                  target="_blank" rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-3 w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-5 rounded-full hover:opacity-90 transition-opacity shadow-[0_0_40px_rgba(236,72,153,0.3)] uppercase tracking-widest text-sm"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-3 w-full bg-gradient-to-r from-purple-600 via-pink-500 to-wh-pink text-white font-bold py-5 rounded-full hover:opacity-90 transition-opacity shadow-[0_0_40px_rgba(255,42,117,0.25)] uppercase tracking-widest text-sm"
                 >
-                  <Camera className="w-5 h-5" /> Follow @willowandhoney.esthetics
+                  <Camera className="w-5 h-5 shrink-0" />
+                  <span>@willowandhoney.esthetics</span>
                 </a>
+                {/* Contact info card */}
+                <div className="bg-white/5 border border-white/10 rounded-[28px] p-6 space-y-4 backdrop-blur-sm">
+                  <h3 className="font-playfair italic text-xl text-white mb-2">Reach Out</h3>
+                  <div className="space-y-3 font-outfit text-sm">
+                    <div className="flex items-center gap-3 text-white/70">
+                      <span className="text-wh-pink">✦</span>
+                      <span>DM on Instagram for fastest response</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-white/70">
+                      <span className="text-wh-pink">✦</span>
+                      <span>Custom service inquiries welcome</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-white/70">
+                      <span className="text-wh-pink">✦</span>
+                      <span>Nashville, TN area · Mobile travel available</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-white/70">
+                      <span className="text-wh-pink">✦</span>
+                      <span>Weekend appointments · 9 AM – 12 PM</span>
+                    </div>
+                  </div>
+                </div>
+                {/* Powered-by / brand footer */}
+                <div className="text-center pt-2">
+                  <Flower2 className="w-6 h-6 text-wh-pink/40 mx-auto animate-spin-slow" style={{ animationDuration: '12s' }} />
+                </div>
               </div>
             </motion.div>
           )}
