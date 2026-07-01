@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flower2, ShieldCheck, Camera, Sparkles, CalendarDays, Compass, Plus, Star } from 'lucide-react';
+import { Flower2, ShieldCheck, Camera, Sparkles, CalendarDays, Compass, Plus, Star, Download } from 'lucide-react';
 import { BottomSheetBooking } from './components/BottomSheetBooking';
 
 export default function App() {
@@ -10,6 +10,30 @@ export default function App() {
   const [reviews, setReviews] = useState<any[]>([]);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [isPWA, setIsPWA] = useState(false);
+
+  useEffect(() => {
+    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+      setIsPWA(true);
+    }
+    const handleInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setInstallPrompt(null);
+      setIsPWA(true);
+    }
+  };
 
   const heroImages = [
     '/hero_mobile.png?v=1',
@@ -88,6 +112,26 @@ export default function App() {
 
   return (
     <div className="bg-wh-dark text-white min-h-screen pb-32 selection:bg-wh-pink selection:text-white relative overflow-x-hidden no-scrollbar">
+      
+      {/* PWA INSTALL FLOATING PILL */}
+      <AnimatePresence>
+        {installPrompt && !isPWA && (
+          <motion.div 
+            initial={{ y: -50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -50, opacity: 0 }}
+            className="fixed top-6 left-1/2 -translate-x-1/2 z-50 pointer-events-auto"
+          >
+            <button 
+              onClick={handleInstallClick}
+              className="flex items-center gap-2 bg-wh-pink/90 backdrop-blur-md text-white px-5 py-2.5 rounded-full font-bold uppercase tracking-wider text-[10px] shadow-[0_0_20px_rgba(255,42,117,0.5)] border border-white/20 hover:bg-wh-pink transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Install App
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* PERSISTENT HERO HEADER (Always visible across all tabs) */}
       <div className="relative w-full h-[60vh] md:h-[70vh] bg-black flex flex-col items-center justify-end overflow-hidden rounded-b-[40px] shadow-2xl z-20 pb-8 md:pb-12">
