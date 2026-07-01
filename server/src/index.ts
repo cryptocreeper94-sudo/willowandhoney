@@ -478,7 +478,8 @@ app.post('/api/admin/journeys', authenticateAdmin, async (req, res) => {
       recommendations
     }).returning({ id: skinJourneys.id });
     
-    const journeyId = result[0].id;
+    if (!result || result.length === 0) throw new Error('Failed to insert journey');
+    const journeyId = result[0]!.id;
     
     // Insert Photos if provided (expecting array of { imageUrl, type })
     if (photos && Array.isArray(photos) && photos.length > 0) {
