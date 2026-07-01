@@ -5,7 +5,6 @@ import { Link } from 'react-router-dom';
 
 export default function Portal() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [clientId, setClientId] = useState<string | null>(null);
   const [clientName, setClientName] = useState<string | null>(null);
   const [phone, setPhone] = useState('');
   const [pin, setPin] = useState('');
@@ -18,7 +17,6 @@ export default function Portal() {
     if (saved) {
       const data = JSON.parse(saved);
       setIsLoggedIn(true);
-      setClientId(data.clientId);
       setClientName(data.name);
       fetchJourneys(data.clientId);
     }
@@ -37,7 +35,6 @@ export default function Portal() {
       if (!res.ok) throw new Error(data.error || 'Login failed');
       
       setIsLoggedIn(true);
-      setClientId(data.clientId);
       setClientName(data.name);
       localStorage.setItem('wh_portal_auth', JSON.stringify(data));
       fetchJourneys(data.clientId);
@@ -62,7 +59,6 @@ export default function Portal() {
   const handleLogout = () => {
     localStorage.removeItem('wh_portal_auth');
     setIsLoggedIn(false);
-    setClientId(null);
     setJourneys([]);
   };
 
