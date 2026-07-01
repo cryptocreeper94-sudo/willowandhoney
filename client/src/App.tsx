@@ -203,7 +203,7 @@ export default function App() {
                 </div>
 
                 {/* Credentials */}
-                <div className="flex flex-wrap justify-center gap-4 mb-20">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-20 w-full max-w-5xl mx-auto">
                   {[
                     { icon: '🎓', label: 'Georgia Career Institute', sub: 'Licensed Esthetician' },
                     { icon: '✦', label: 'Skin Barrier Specialist', sub: 'Facial Sculpting' },
