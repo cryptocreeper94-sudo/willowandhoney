@@ -426,10 +426,76 @@ const authenticateDev = (req: express.Request, res: express.Response, next: expr
 
 app.get('/api/admin/bookings', authenticateAdmin, async (req, res) => {
   try {
-    const allBookings = await db.select().from(bookings);
+    const allBookings = await db.select().from(bookings).orderBy(sql`${bookings.startTime} DESC`);
     res.json(allBookings);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch bookings' });
+  }
+});
+
+// --- ADMIN CLIENT & JOURNEY MANAGEMENT ---
+
+app.get('/api/admin/clients', authenticateAdmin, async (req, res) => {
+  try {
+    const allClients = await db.select().from(clients).orderBy(sql`${clients.createdAt} DESC`);
+    res.json(allClients);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch clients' });
+  }
+});
+
+app.post('/api/admin/clients', authenticateAdmin, async (req, res) => {
+  try {
+    const { name, phone } = req.body;
+    if (!name || !phone) return res.status(400).json({ error: 'Name and phone required' });
+    
+    // Generate 6-digit random PIN
+    const pin = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    await db.insert(clients).values({
+      name,
+      phone,
+      pin,
+      createdAt: new Date().toISOString()
+    });
+    
+    res.json({ success: true, pin });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create client' });
+  }
+});
+
+app.post('/api/admin/journeys', authenticateAdmin, async (req, res) => {
+  try {
+    const { clientId, sessionDate, notes, recommendations, photos } = req.body;
+    if (!clientId || !sessionDate || !notes) return res.status(400).json({ error: 'Missing fields' });
+    
+    // Insert Journey
+    const result = await db.insert(skinJourneys).values({
+      clientId: Number(clientId),
+      sessionDate,
+      notes,
+      recommendations
+    }).returning({ id: skinJourneys.id });
+    
+    const journeyId = result[0].id;
+    
+    // Insert Photos if provided (expecting array of { imageUrl, type })
+    if (photos && Array.isArray(photos) && photos.length > 0) {
+      for (const p of photos) {
+        if (p.imageUrl && p.type) {
+          await db.insert(journeyPhotos).values({
+            journeyId,
+            imageUrl: p.imageUrl,
+            type: p.type
+          });
+        }
+      }
+    }
+    
+    res.json({ success: true, journeyId });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create journey' });
   }
 });
 

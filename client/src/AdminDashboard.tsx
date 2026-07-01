@@ -15,22 +15,31 @@ export function AdminDashboard() {
   const [newPin, setNewPin] = useState('');
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [settingsSuccess, setSettingsSuccess] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'services' | 'marketing' | 'memberships' | 'security'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'services' | 'marketing' | 'memberships' | 'security' | 'clients'>('overview');
   const [slideIndex, setSlideIndex] = useState(0);
 
   const [analytics, setAnalytics] = useState<any>(null);
   const [bookings, setBookings] = useState<any[]>([]);
   const [services, setServices] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
   
+  // Client Management State
+  const [newClientName, setNewClientName] = useState('');
+  const [newClientPhone, setNewClientPhone] = useState('');
+  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [newJourneyNotes, setNewJourneyNotes] = useState('');
+  const [newJourneyRecommendations, setNewJourneyRecommendations] = useState('');
+  const [newJourneyPhotoUrl, setNewJourneyPhotoUrl] = useState('');
   // New Service Form State
   const [newService, setNewService] = useState({ category: 'Facials', name: '', price: '', durationMinutes: 60, isMobileEligible: true });
 
   const fetchData = async () => {
     try {
-      const [analyticsRes, bookingsRes, servicesRes] = await Promise.all([
+      const [analyticsRes, bookingsRes, servicesRes, clientsRes] = await Promise.all([
         fetch('/api/admin/analytics', { headers: { 'X-Admin-Pin': pin } }),
         fetch('/api/admin/bookings', { headers: { 'X-Admin-Pin': pin } }),
-        fetch('/api/services')
+        fetch('/api/services'),
+        fetch('/api/admin/clients', { headers: { 'X-Admin-Pin': pin } })
       ]);
 
       if (!analyticsRes.ok) throw new Error('Invalid PIN');
@@ -38,9 +47,62 @@ export function AdminDashboard() {
       setAnalytics(await analyticsRes.json());
       setBookings(await bookingsRes.json());
       setServices(await servicesRes.json());
+      setClients(await clientsRes.json());
       setIsAuthenticated(true);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch data');
+    }
+  };
+
+  const handleAddClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/admin/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Pin': pin },
+        body: JSON.stringify({ name: newClientName, phone: newClientPhone })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`Client created successfully!\n\nName: ${newClientName}\nPIN: ${data.pin}\n\nText this PIN to the client so they can log in.`);
+        setNewClientName('');
+        setNewClientPhone('');
+        fetchData();
+      } else {
+        alert('Failed to create client: ' + data.error);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleAddJourney = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedClient) return;
+    try {
+      const photos = newJourneyPhotoUrl ? [{ imageUrl: newJourneyPhotoUrl, type: 'after' }] : [];
+      const res = await fetch('/api/admin/journeys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Pin': pin },
+        body: JSON.stringify({
+          clientId: selectedClient.id,
+          sessionDate: new Date().toISOString().split('T')[0],
+          notes: newJourneyNotes,
+          recommendations: newJourneyRecommendations,
+          photos
+        })
+      });
+      if (res.ok) {
+        alert('Journey session added!');
+        setNewJourneyNotes('');
+        setNewJourneyRecommendations('');
+        setNewJourneyPhotoUrl('');
+        setSelectedClient(null);
+      } else {
+        alert('Failed to add journey session');
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -336,6 +398,100 @@ export function AdminDashboard() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* CLIENTS & JOURNEYS TAB */}
+        {activeTab === 'clients' && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="bg-wh-card p-6 md:p-8 rounded-3xl border border-white/10 flex flex-col md:flex-row gap-8">
+              <div className="flex-1 space-y-4">
+                <h2 className="text-2xl font-playfair italic">Add New Client</h2>
+                <p className="text-sm text-white/50">Register a client to generate their secure 6-digit PIN for the Skin Journey Portal.</p>
+                <form onSubmit={handleAddClient} className="space-y-4 pt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-xs text-white/60 uppercase tracking-wider">Client Name</label>
+                      <input 
+                        type="text" required value={newClientName} onChange={e => setNewClientName(e.target.value)}
+                        className="w-full bg-black/50 border border-white/10 rounded-xl p-3 text-sm focus:border-wh-pink focus:outline-none"
+                        placeholder="e.g. Sarah Jenkins"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs text-white/60 uppercase tracking-wider">Phone Number</label>
+                      <input 
+                        type="tel" required value={newClientPhone} onChange={e => setNewClientPhone(e.target.value)}
+                        className="w-full bg-black/50 border border-white/10 rounded-xl p-3 text-sm focus:border-wh-pink focus:outline-none"
+                        placeholder="555-0123"
+                      />
+                    </div>
+                  </div>
+                  <button type="submit" className="bg-white/10 hover:bg-white text-white hover:text-black font-bold py-3 px-6 rounded-xl transition-all w-full md:w-auto">
+                    Generate Portal PIN
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            <div className="bg-wh-card rounded-3xl border border-white/10 overflow-hidden">
+              <div className="p-6 md:p-8 border-b border-white/10 flex justify-between items-center">
+                <h2 className="text-xl font-playfair italic">Client Directory</h2>
+              </div>
+              <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                {clients.length === 0 ? (
+                  <div className="col-span-2 text-center text-white/30 italic py-12">No clients registered yet.</div>
+                ) : (
+                  clients.map(c => (
+                    <div key={c.id} className="bg-black/50 border border-white/10 rounded-2xl p-6 relative overflow-hidden group">
+                      <div className="absolute top-0 right-0 p-4 text-xs font-mono text-wh-pink">PIN: {c.pin}</div>
+                      <h3 className="text-lg font-bold mb-1">{c.name}</h3>
+                      <p className="text-white/50 text-sm mb-4">{c.phone}</p>
+                      
+                      {selectedClient?.id === c.id ? (
+                        <form onSubmit={handleAddJourney} className="mt-4 pt-4 border-t border-white/10 space-y-4 animate-in fade-in">
+                          <div>
+                            <label className="text-xs text-white/60 uppercase tracking-wider">Session Notes</label>
+                            <textarea 
+                              required value={newJourneyNotes} onChange={e => setNewJourneyNotes(e.target.value)}
+                              className="w-full bg-black border border-white/10 rounded-xl p-3 text-sm focus:border-wh-pink focus:outline-none mt-1 h-24"
+                              placeholder="Clinical observations..."
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-white/60 uppercase tracking-wider">Recommendations</label>
+                            <textarea 
+                              value={newJourneyRecommendations} onChange={e => setNewJourneyRecommendations(e.target.value)}
+                              className="w-full bg-black border border-white/10 rounded-xl p-3 text-sm focus:border-wh-pink focus:outline-none mt-1 h-16"
+                              placeholder="Products to use..."
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-white/60 uppercase tracking-wider">After Photo URL (Optional)</label>
+                            <input 
+                              type="url" value={newJourneyPhotoUrl} onChange={e => setNewJourneyPhotoUrl(e.target.value)}
+                              className="w-full bg-black border border-white/10 rounded-xl p-3 text-sm focus:border-wh-pink focus:outline-none mt-1"
+                              placeholder="https://..."
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <button type="submit" className="flex-1 bg-wh-pink text-white font-bold py-2 rounded-lg text-sm">Save Session</button>
+                            <button type="button" onClick={() => setSelectedClient(null)} className="flex-1 bg-white/10 text-white font-bold py-2 rounded-lg text-sm">Cancel</button>
+                          </div>
+                        </form>
+                      ) : (
+                        <button 
+                          onClick={() => setSelectedClient(c)}
+                          className="text-xs uppercase tracking-widest font-bold bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2 rounded-lg transition-colors w-full"
+                        >
+                          Add Session Notes
+                        </button>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
