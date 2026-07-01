@@ -313,9 +313,9 @@ export default function App() {
                           className="text-left group relative overflow-hidden rounded-[32px] bg-black border border-white/10 hover:border-wh-pink/50 transition-all shadow-2xl h-[320px] flex flex-col justify-end"
                         >
                           {/* Photorealistic Background Image */}
-                          {service.image_url ? (
+                          {service.imageUrl ? (
                             <img 
-                              src={service.image_url} 
+                              src={service.imageUrl} 
                               alt={service.name}
                               className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-500 group-hover:scale-105"
                             />
