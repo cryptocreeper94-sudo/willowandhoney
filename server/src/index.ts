@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { db, sqlite } from './db';
-import { services, bookings, reviews, siteAnalytics, adminSettings } from './db/schema';
+import { services, bookings, reviews, siteAnalytics, adminSettings, clients, skinJourneys, journeyPhotos } from './db/schema';
 import { v4 as uuidv4 } from 'uuid';
 import { eq, and, gte, lte, sql } from 'drizzle-orm';
 import path from 'path';
@@ -57,6 +57,31 @@ sqlite.exec(`
   CREATE TABLE IF NOT EXISTS "admin_settings" (
     "key" text PRIMARY KEY NOT NULL,
     "value" text NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS "clients" (
+    "id" integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+    "phone" text UNIQUE NOT NULL,
+    "pin" text NOT NULL,
+    "name" text NOT NULL,
+    "created_at" text NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS "skin_journeys" (
+    "id" integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+    "client_id" integer NOT NULL,
+    "session_date" text NOT NULL,
+    "notes" text NOT NULL,
+    "recommendations" text,
+    FOREIGN KEY ("client_id") REFERENCES "clients"("id") ON UPDATE no action ON DELETE no action
+  );
+
+  CREATE TABLE IF NOT EXISTS "journey_photos" (
+    "id" integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+    "journey_id" integer NOT NULL,
+    "image_url" text NOT NULL,
+    "type" text NOT NULL,
+    FOREIGN KEY ("journey_id") REFERENCES "skin_journeys"("id") ON UPDATE no action ON DELETE no action
   );
 
   -- Migrate existing services table if needed
@@ -158,6 +183,45 @@ app.get('/api/services', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch services' });
   }
 });
+
+// --- PORTAL ROUTES ---
+
+app.post('/api/portal/login', async (req, res) => {
+  try {
+    const { phone, pin } = req.body;
+    if (!phone || !pin) return res.status(400).json({ error: 'Phone and PIN required' });
+    
+    const [client] = await db.select().from(clients).where(and(eq(clients.phone, phone), eq(clients.pin, pin)));
+    if (!client) return res.status(401).json({ error: 'Invalid credentials' });
+    
+    res.json({ success: true, clientId: client.id, name: client.name });
+  } catch (err) {
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+app.get('/api/portal/journey', async (req, res) => {
+  try {
+    const { clientId } = req.query;
+    if (!clientId) return res.status(400).json({ error: 'Missing clientId' });
+    
+    const journeys = await db.select().from(skinJourneys).where(eq(skinJourneys.clientId, Number(clientId)));
+    const photos = await db.select().from(journeyPhotos).where(
+      sql`${journeyPhotos.journeyId} IN (SELECT id FROM skin_journeys WHERE client_id = ${Number(clientId)})`
+    );
+    
+    const formatted = journeys.map(j => ({
+      ...j,
+      photos: photos.filter(p => p.journeyId === j.id)
+    }));
+    
+    res.json(formatted);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch journey' });
+  }
+});
+
+// --- MAIN ROUTES ---
 
 app.post('/api/bookings', async (req, res) => {
   try {

@@ -44,3 +44,26 @@ export const adminSettings = sqliteTable('admin_settings', {
   key: text('key').primaryKey(),
   value: text('value').notNull(),
 });
+
+export const clients = sqliteTable('clients', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  phone: text('phone').notNull().unique(),
+  pin: text('pin').notNull(), // 6-digit PIN
+  name: text('name').notNull(),
+  createdAt: text('created_at').notNull(),
+});
+
+export const skinJourneys = sqliteTable('skin_journeys', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  clientId: integer('client_id').references(() => clients.id).notNull(),
+  sessionDate: text('session_date').notNull(), // YYYY-MM-DD
+  notes: text('notes').notNull(),
+  recommendations: text('recommendations'),
+});
+
+export const journeyPhotos = sqliteTable('journey_photos', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  journeyId: integer('journey_id').references(() => skinJourneys.id).notNull(),
+  imageUrl: text('image_url').notNull(),
+  type: text('type').notNull(), // 'before' or 'after'
+});

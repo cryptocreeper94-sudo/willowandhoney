@@ -1,7 +1,32 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { Flower2, ShieldCheck, Camera, Sparkles, CalendarDays, Compass, Plus, Star, Download } from 'lucide-react';
 import { BottomSheetBooking } from './components/BottomSheetBooking';
+import { useMagnetic } from './hooks/useMagnetic';
+import { triggerHaptic } from './utils/haptics';
+import { Link } from 'react-router-dom';
+
+function MagneticButton({ onClick, active, icon, label, isPrimary = false }: any) {
+  const { ref, style, onMouseMove, onMouseLeave } = useMagnetic(0.2);
+  
+  return (
+    <motion.button 
+      ref={ref as any}
+      style={style}
+      onMouseMove={onMouseMove}
+      onMouseLeave={onMouseLeave}
+      onClick={onClick}
+      className={`flex-1 flex flex-col items-center gap-1.5 py-3 px-2 rounded-[30px] transition-colors ${
+        active 
+          ? (isPrimary ? 'bg-wh-pink text-white shadow-[0_0_25px_rgba(255,42,117,0.4)]' : 'bg-white/15 text-white') 
+          : 'text-white/40 hover:text-white/80 hover:bg-white/5'
+      }`}
+    >
+      {icon}
+      <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
+    </motion.button>
+  );
+}
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('explore');
@@ -9,9 +34,17 @@ export default function App() {
   const [services, setServices] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
-  const [currentSlide, setCurrentSlide] = useState(0);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [isPWA, setIsPWA] = useState(false);
+
+  const { scrollY } = useScroll();
+  const yHero = useTransform(scrollY, [0, 800], [0, 300]);
+  const opacityHero = useTransform(scrollY, [0, 600], [1, 0]);
+
+  const handleTabChange = (tab: string) => {
+    triggerHaptic(10);
+    setActiveTab(tab);
+  };
 
   useEffect(() => {
     if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
@@ -35,16 +68,6 @@ export default function App() {
     }
   };
 
-  const heroImages = [
-    '/hero_mobile.png?v=1',
-    '/services/facials.png',
-    '/services/body_treatment.png',
-    '/services/hair_removal.png',
-    '/services/other_services.png',
-    '/hero1.png'
-  ];
-
-  // Easter egg state
   const lastClickTime = useRef(0);
   const clickCount = useRef(0);
 
@@ -94,14 +117,6 @@ export default function App() {
     }).catch(console.error);
   }, []);
 
-  // Ken Burns Slideshow Timer
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % heroImages.length);
-    }, 8000); // Change image every 8 seconds
-    return () => clearInterval(timer);
-  }, [heroImages.length]);
-
   const openBooking = (service: any) => {
     setSelectedService(service);
     setIsBookingOpen(true);
@@ -135,22 +150,44 @@ export default function App() {
       
       {/* PERSISTENT HERO HEADER (Always visible across all tabs) */}
       <div className="relative w-full h-[60vh] md:h-[70vh] bg-black flex flex-col items-center justify-end overflow-hidden rounded-b-[40px] shadow-2xl z-20 pb-8 md:pb-12">
-        <AnimatePresence mode="wait">
-          <motion.img 
-            key={currentSlide}
-            src={heroImages[currentSlide]} 
-            alt="Hero Slideshow"
-            className="absolute inset-0 w-full h-full object-cover opacity-60"
-            initial={{ scale: 1.0, opacity: 0 }}
-            animate={{ scale: 1.15, opacity: 0.6 }}
-            exit={{ opacity: 0 }}
-            transition={{ 
-              opacity: { duration: 2 },
-              scale: { duration: 15, ease: 'linear' }
+        <motion.div 
+          style={{ y: yHero, opacity: opacityHero }}
+          className="absolute inset-0 w-full h-full"
+        >
+          {/* LIQUID MESH GRADIENT PLACEHOLDER */}
+          <div className="absolute inset-0 opacity-80" style={{
+            background: 'radial-gradient(circle at 50% 50%, #4a1c40 0%, #000000 80%)'
+          }} />
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.2, 1],
+              rotate: [0, 90, 0],
+              x: [0, 50, -50, 0],
+              y: [0, -50, 50, 0]
             }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] rounded-full bg-wh-pink/20 blur-[120px]"
           />
-        </AnimatePresence>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.5, 1],
+              rotate: [0, -90, 0],
+              x: [0, -50, 50, 0],
+              y: [0, 50, -50, 0]
+            }}
+            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+            className="absolute top-[30%] -right-[10%] w-[60%] h-[60%] rounded-full bg-purple-600/20 blur-[100px]"
+          />
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.1, 1],
+              y: [0, 100, 0]
+            }}
+            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -bottom-[20%] left-[20%] w-[80%] h-[50%] rounded-full bg-wh-gold/10 blur-[100px]"
+          />
+        </motion.div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none z-10" />
         
         <div className="relative z-10 text-center px-6">
           <motion.h1 
@@ -488,10 +525,20 @@ export default function App() {
               />
               Powered by
             </div>
-            <p className="text-sm font-inter text-white/80 tracking-widest font-bold">
+            <div className="flex gap-6 mt-6 md:mt-0">
+              <a href="https://instagram.com/willowandhoney.esthetics" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-white transition-colors">
+                <Camera className="w-5 h-5" />
+              </a>
+            </div>
+            <div className="flex flex-col md:flex-row items-center gap-6 mt-6 md:mt-0 font-outfit text-sm">
+              <Link to="/portal" className="text-white/50 hover:text-wh-pink transition-colors uppercase tracking-widest font-bold border border-white/10 px-4 py-2 rounded-full hover:border-wh-pink/50">
+                Client Portal
+              </Link>
+            </div>
+            <p className="text-sm font-inter text-white/80 tracking-widest font-bold mt-8">
               DARKWAVE STUDIOS LLC
             </p>
-            <p className="text-[10px] font-outfit text-white/30 tracking-widest">
+            <p className="text-[10px] font-outfit text-white/30 tracking-widest mt-8 md:mt-0">
               &copy; {new Date().getFullYear()}
             </p>
           </a>
@@ -502,29 +549,25 @@ export default function App() {
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full max-w-sm px-6 pointer-events-none">
         <div className="bg-black/80 backdrop-blur-3xl border border-white/20 rounded-full p-2 flex justify-between items-center shadow-[0_30px_60px_rgba(0,0,0,0.8)] pointer-events-auto">
           
-          <button 
-            onClick={() => setActiveTab('explore')}
-            className={`flex-1 flex flex-col items-center gap-1.5 py-3 px-2 rounded-full transition-all ${activeTab === 'explore' ? 'bg-white/15 text-white' : 'text-white/40 hover:text-white/80'}`}
-          >
-            <Compass className="w-5 h-5" />
-            <span className="text-[10px] font-bold uppercase tracking-widest">Explore</span>
-          </button>
-          
-          <button 
-            onClick={() => setActiveTab('book')}
-            className={`flex-1 flex flex-col items-center gap-1.5 py-3 px-2 rounded-full transition-all ${activeTab === 'book' ? 'bg-wh-pink text-white shadow-[0_0_25px_rgba(255,42,117,0.4)]' : 'text-white/40 hover:text-white/80'}`}
-          >
-            <CalendarDays className="w-5 h-5" />
-            <span className="text-[10px] font-bold uppercase tracking-widest">Book</span>
-          </button>
-
-          <button 
-            onClick={() => setActiveTab('connect')}
-            className={`flex-1 flex flex-col items-center gap-1.5 py-3 px-2 rounded-full transition-all ${activeTab === 'connect' ? 'bg-white/15 text-white' : 'text-white/40 hover:text-white/80'}`}
-          >
-            <Camera className="w-5 h-5" />
-            <span className="text-[10px] font-bold uppercase tracking-widest">Connect</span>
-          </button>
+          <MagneticButton 
+            onClick={() => handleTabChange('explore')}
+            active={activeTab === 'explore'}
+            icon={<Compass className="w-5 h-5" />}
+            label="Explore"
+          />
+          <MagneticButton 
+            onClick={() => handleTabChange('book')}
+            active={activeTab === 'book'}
+            icon={<CalendarDays className="w-5 h-5" />}
+            label="Book"
+            isPrimary
+          />
+          <MagneticButton 
+            onClick={() => handleTabChange('connect')}
+            active={activeTab === 'connect'}
+            icon={<Camera className="w-5 h-5" />}
+            label="Connect"
+          />
 
         </div>
       </div>
