@@ -263,7 +263,13 @@ export default function App() {
                     <p className="text-white/50 font-outfit uppercase tracking-[0.2em] text-xs">Real Results, Real Confidence</p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {reviews.map(review => (
+                    {reviews.length === 0 ? (
+                      <div className="col-span-2 text-center py-12 bg-white/5 border border-white/10 rounded-[30px]">
+                        <Star className="w-8 h-8 text-wh-gold/30 mx-auto mb-4" />
+                        <p className="text-white/40 font-outfit italic">Be the first to share your experience.</p>
+                      </div>
+                    ) : (
+                    reviews.map(review => (
                       <div key={review.id} className="bg-white/5 border border-white/10 rounded-[30px] p-8 backdrop-blur-sm hover:border-wh-pink/30 transition-all">
                         <div className="flex items-center justify-between mb-6">
                           <div className="flex items-center gap-3">
@@ -283,7 +289,8 @@ export default function App() {
                         </div>
                         <p className="text-white/80 font-outfit font-light leading-relaxed italic">"{review.comment}"</p>
                       </div>
-                    ))}
+                    ))
+                    )}
                   </div>
                 </div>
 
@@ -367,6 +374,8 @@ export default function App() {
                                     ? '/services/body_treatment.png'
                                     : (category as string).toLowerCase().includes('hair') || (category as string).toLowerCase().includes('wax')
                                     ? '/services/hair_removal.png'
+                                    : (category as string).toLowerCase().includes('brow') || (category as string).toLowerCase().includes('lash')
+                                    ? '/services/other_services.png'
                                     : '/services/other_services.png'
                                 }
                                 alt=""
@@ -515,34 +524,29 @@ export default function App() {
             </p>
           </div>
 
-          <a href="https://darkwavestudios.io" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center md:items-end gap-2 hover:opacity-80 transition-opacity">
+          <div className="flex flex-col items-center md:items-end gap-4">
             <div className="flex items-center gap-2 text-white/50 text-[10px] font-inter tracking-[0.2em] uppercase">
               <ShieldCheck 
                 className="w-4 h-4 text-white/30 cursor-pointer" 
-                onClick={(e) => {
-                  e.preventDefault(); // prevent the link click
-                  handleDevTrigger(e);
-                }}
+                onClick={(e) => handleDevTrigger(e)}
               />
               Powered by
             </div>
-            <div className="flex gap-6 mt-6 md:mt-0">
-              <a href="https://instagram.com/willowandhoney.esthetics" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-white transition-colors">
+            <a href="https://darkwavestudios.io" target="_blank" rel="noopener noreferrer" className="text-sm font-inter text-white/80 tracking-widest font-bold hover:text-white transition-colors">
+              DARKWAVE STUDIOS LLC
+            </a>
+            <div className="flex gap-6">
+              <a href="https://instagram.com/willowandhoney.esthetics" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-white transition-colors" aria-label="Instagram">
                 <Camera className="w-5 h-5" />
               </a>
             </div>
-            <div className="flex flex-col md:flex-row items-center gap-6 mt-6 md:mt-0 font-outfit text-sm">
-              <Link to="/portal" className="text-white/50 hover:text-wh-pink transition-colors uppercase tracking-widest font-bold border border-white/10 px-4 py-2 rounded-full hover:border-wh-pink/50">
-                Client Portal
-              </Link>
-            </div>
-            <p className="text-sm font-inter text-white/80 tracking-widest font-bold mt-8">
-              DARKWAVE STUDIOS LLC
-            </p>
-            <p className="text-[10px] font-outfit text-white/30 tracking-widest mt-8 md:mt-0">
+            <Link to="/portal" className="text-white/50 hover:text-wh-pink transition-colors uppercase tracking-widest font-bold text-sm border border-white/10 px-4 py-2 rounded-full hover:border-wh-pink/50">
+              Client Portal
+            </Link>
+            <p className="text-[10px] font-outfit text-white/30 tracking-widest">
               &copy; {new Date().getFullYear()}
             </p>
-          </a>
+          </div>
         </div>
       </footer>
 
@@ -555,6 +559,7 @@ export default function App() {
             active={activeTab === 'explore'}
             icon={<Compass className="w-5 h-5" />}
             label="Explore"
+            aria-label="Explore tab"
           />
           <MagneticButton 
             onClick={() => handleTabChange('book')}
@@ -562,12 +567,14 @@ export default function App() {
             icon={<CalendarDays className="w-5 h-5" />}
             label="Book"
             isPrimary
+            aria-label="Book appointment tab"
           />
           <MagneticButton 
             onClick={() => handleTabChange('connect')}
             active={activeTab === 'connect'}
             icon={<Camera className="w-5 h-5" />}
             label="Connect"
+            aria-label="Connect tab"
           />
 
         </div>

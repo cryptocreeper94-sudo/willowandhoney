@@ -259,6 +259,7 @@ export function AdminDashboard() {
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {[
               { id: 'overview', label: 'Overview', icon: Activity },
+              { id: 'clients', label: 'Clients & Journeys', icon: Users },
               { id: 'services', label: 'Service Manager', icon: Edit3 },
               { id: 'marketing', label: 'Marketing Hub', icon: QrCode },
               { id: 'memberships', label: 'Memberships', icon: CreditCard },
