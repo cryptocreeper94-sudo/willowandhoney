@@ -18,7 +18,7 @@ export default defineConfig({
         skipWaiting: true,
         clientsClaim: true
       },
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'masked-icon.svg'],
+      includeAssets: ['favicon.png', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
         name: 'Willow & Honey',
         short_name: 'Willow & Honey',
